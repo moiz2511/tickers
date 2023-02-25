@@ -1,0 +1,405 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title> Tickers App</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
+  <link href="{% static 'files/styles.css' %}" rel="stylesheet">
+  <script src="{% static 'files/strategies_dp.js' %}"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/bbbootstrap/libraries@main/choices.min.css">
+  <script src="https://cdn.jsdelivr.net/gh/bbbootstrap/libraries@main/choices.min.js"></script>
+ <script>
+
+async function val() {
+    d = document.getElementById("dropDownVal").value;
+    window.location.href =` http://127.0.0.1:8000/strategies/?id=1&category=${d}`
+    console.log("========",d);
+    var {get_data,page_data,current_page} = await getStrat();
+
+    const paginationRow =document.getElementById('pagination')
+ 
+    paginationRow.innerHTML =``
+
+    handlePagination(page_data,current_page)
+    const tableRow =document.getElementById('strategy-table')
+    
+    tableRow.innerHTML =``
+    get_data.forEach(element => {
+     tableRow.innerHTML+= `<tr id='stratagey-row-${element.id}'>
+      <td contenteditable='false' id='stratagey-row-${element.id}-strategy'> ${element.strategy}</td>
+      <td contenteditable='false' id='stratagey-row-${element.id}-metric'>${element.metric}</td>
+      <td contenteditable='false' id='stratagey-row-${element.id}-operator'> ${element.operator}</td>
+      <td contenteditable='false' id='stratagey-row-${element.id}-range'> ${element.range}</td>
+      <td class="hidden-icon" style="border: None;" data-id='stratagey-row-${element.id}' onclick="edit(${element.id})">
+      <i class="fa fa-edit" aria-hidden="true"></i> 
+      </td>
+      <td class="hidden-icon" style="border: None;" data-id='stratagey-row-${element.id}' onclick="del(${element.id})">
+        <i class="fa fa-trash-o"  aria-hidden="true"></i> 
+      </td>
+      
+      </tr>`
+   });
+
+}
+
+
+function handlePagination(pages,current) {
+  
+  
+let val = document.getElementById("dropDownVal").value
+  let category = val?val:"All"
+  if(pages < 20){
+      for(i=1;i<=pages;i++){
+      let opt = document.createElement("a");
+        opt.value = i; 
+        opt.innerHTML = i; 
+        if(i == current){
+          opt.className = "active"
+        }
+        function val() {
+          d = document.getElementById("dropDownVal").value;
+          console.log(d);
+         
+        }
+
+        opt.href=  `http://127.0.0.1:8000/strategies/?id=${i}&category=${category}`
+        console.log(opt)
+        $('#pagination').append(opt); 
+        
+    }
+    }else{
+      var arr =[];
+      current=current
+
+
+      let index2 = current-2;
+      arr.push(index2)
+
+      let index1= current-1;
+      arr.push(index1)
+
+      let index =current;
+      arr.push(index)
+
+      let nextIndex = current+1;
+
+      arr.push(nextIndex)
+
+      if(current == 1){
+
+      }else{
+        let opt = document.createElement("a");
+        opt.value = current-1; 
+        opt.innerHTML = `<i class="fa fa-angle-double-left"></i>`
+      
+        opt.href=  `http://127.0.0.1:8000/strategies/?id=${index1}&category=${category}`
+        $('#pagination').append(opt); 
+      }
+      
+      
+for (let i=0 ; i<arr.length ;i++){
+  if(arr[i]>0){
+    if(arr[i] <= pages){
+    let opt = document.createElement("a");
+      opt.value = arr[i]; 
+        opt.innerHTML = arr[i]; 
+        if(arr[i] == current){
+          opt.className = "active"
+        }
+        opt.href=  `http://127.0.0.1:8000/strategies/?id=${arr[i]}&category=${category}`
+        $('#pagination').append(opt); 
+  }}
+  
+}
+
+if(current ==pages){
+
+}else{
+  let right = document.createElement("a");
+
+right.value = current-1; 
+right.innerHTML = `<i class="fa fa-angle-double-right"></i>`
+      
+right.href=  "http://127.0.0.1:8000/strategies/?id="+nextIndex
+        $('#pagination').append(right); 
+}
+
+
+}
+
+
+}
+
+function edit(el){
+
+  let rowId = 'stratagey-row-'+el
+  let stratageyTdId = 'stratagey-row-'+el+'-strategy'
+  let metricTdId = 'stratagey-row-'+el+'-metric'
+  let operatorTdId = 'stratagey-row-'+el+'-operator'
+  let rangeTdId = 'stratagey-row-'+el+'-range'
+
+
+  let element =document.getElementById(rowId)
+  let strategyVal= document.getElementById(stratageyTdId).innerText
+  let metricVal= document.getElementById(metricTdId).innerText
+  let operatorVal= document.getElementById(operatorTdId).innerText
+  let rangeVal= document.getElementById(rangeTdId).innerText
+
+
+  element.innerHTML = `
+    <tr id='${rowId}' >
+      <td  id='${stratageyTdId}-strategy'><input value='${strategyVal}' name="strategyUpdate" id="strategyUpdateID"/></td>
+      <td > <input value='${metricVal}' name="metricUpdate" id="metricUpdateID"/></td>
+      <td > <input value='${operatorVal}' name="operatorUpdate" id="operatorUpdateID"/></td>
+      <td > <input value='${rangeVal}' name="rangeUpdate" id="rangeUpdateID"/></td>
+      <td style="border: None;" onclick="save_row(${el})">            
+      <i class="fa fa-floppy-o" aria-hidden="true"></i> 
+      </td>
+    </tr>
+  `;
+
+}
+async function handleApiCalls() {
+    document.getElementById("tableDiv").className = "hideTable";
+    document.getElementById("spinner").className = "spinner-border";
+    var data = await getDropDown();
+    const dropDownVal = document.getElementById('dropDownVal')
+
+    for (let i = 0; i < data.length; i++) {
+        let opt = document.createElement("option");
+        opt.value = data[i]; //or i, depending on what you need to do
+        opt.innerHTML = data[i]; 
+        
+        $('#dropDownVal').append(opt); //Chuck it into the dom here if you want
+       
+     } 
+
+
+
+
+     let url = window.location.search;
+     
+     let catogery = url.substring(url.lastIndexOf("category=")).split("=")[1];
+
+
+     console.log("CATEGRY", catogery)
+
+     if(catogery){
+      let opt = document.getElementById("dropDownVal");
+      opt.value = catogery; 
+     }
+    var {get_data,page_data,current_page} = await getStrat();
+
+    const paginationRow =document.getElementById('pagination')
+ 
+    const tableRow =document.getElementById('strategy-table')
+    tableRow.innerHTML =``
+    handlePagination(page_data,current_page)
+
+   
+  
+    get_data.forEach(element => {
+     tableRow.innerHTML+= `<tr id='stratagey-row-${element.id}'>
+      <td contenteditable='false' id='stratagey-row-${element.id}-strategy'> ${element.strategy}</td>
+      <td contenteditable='false' id='stratagey-row-${element.id}-metric'>${element.metric}</td>
+      <td contenteditable='false' id='stratagey-row-${element.id}-operator'> ${element.operator}</td>
+      <td contenteditable='false' id='stratagey-row-${element.id}-range'> ${element.range}</td>
+      <td class="hidden-icon" style="border: None;" data-id='stratagey-row-${element.id}' onclick="edit(${element.id})">
+      <i class="fa fa-edit" aria-hidden="true"></i> 
+      </td>
+      <td class="hidden-icon" style="border: None;" data-id='stratagey-row-${element.id}' onclick="del(${element.id})">
+        <i class="fa fa-trash-o"  aria-hidden="true"></i> 
+      </td>
+      </tr>`
+   });
+    
+    
+     document.getElementById("tableDiv").className = "";
+     document.getElementById("spinner").className = "hideTable";
+
+
+   }
+ </script>
+  
+</head>
+<style>
+.container {
+    border: 1px solid rgba(0, 0, 0, .11);
+    
+    padding: 10px;
+    width: 500px
+}
+
+.error{
+  border: 1px solid red;
+}
+.error:focus-visible{
+  border: 1px solid red;
+}  
+
+
+.controls-item {
+    display: inline-block;
+}
+
+.btn {
+    margin: 1px;
+}
+
+.pagination {
+    display: flex;
+    width: 100%;
+    flex-direction: row;
+    justify-content: end;
+    padding-right: 130px;
+}
+
+
+.pagination a {
+  color: black;
+  float: left;
+  padding: 8px 16px;
+  text-decoration: none;
+  margin-right: 10px;
+}
+
+.pagination a.active {
+  background-color: gray;
+  color: white;
+  border-radius: 5px;
+}
+
+.pagination a:hover:not(.active) {
+  background-color: #ddd;
+  border-radius: 5px;
+}
+
+ th {
+  border: 1px solid black;
+}
+th{
+    background: grey;
+    color:white;
+}
+td{
+
+    background: white;
+    color:black;
+
+}
+#strategy_table  {
+    width: 85%;
+    margin-left: 7%;
+  margin-top: 5%;
+}
+.editrow{
+    width: 100%;
+}
+
+.hidden-icon{
+  width: 20px;
+}
+.tableView{
+  padding: 10px 70px;
+}
+
+.hideTable{
+  display: none;
+}
+
+.spinnerDiv{
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+</style>
+<body onload= 'handleApiCalls()'>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'investing_styles' %}"> Context </a>
+      </li>
+      <li class="nav-item ">
+        <a class="nav-link" href="{% url 'index' %}"> Data Acquisition </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link active" href="{% url 'dp_investing_styles' %}"> Data Processing</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link "  href="{% url 'data_analysis' %}"> Data Analysis</a>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+
+
+
+
+<div class="pl-4 alert alert-secondary">
+  <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'dp_investing_styles' %}"> Investing Style </span>
+  <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'model_dp' %}" class="ml-3"> Analysis Model </a></span>
+  <span class="title" id="reg_title"> <a style="color: #383d41; font-weight:bold;" href="{% url 'strategies' %}" class="ml-3"> Screen Model </span>
+  <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'ranges_dp' %}" class="ml-3"> Ranges  </a></span>
+  <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'aggragate_fiancials' %}" class="ml-3"> Aggregate Financials  </a></span>
+  <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'create_metrics' %}" class="ml-3"> Create Metrics </a></span>
+  <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'advancedRatios' %}" class="ml-3"> Advanced Metrics  </a></span>
+</div>
+<div class="spinnerDiv">
+  <div class="hideTable" role="status" id="spinner">
+    <span class="visually-hidden"></span>
+  </div>
+</div>
+
+<div id="tableDiv" class="">
+
+<label for="drop" style="padding-left:  70px;">Strategy</label>
+
+<select id="dropDownVal" name="drop" onchange="val()">
+  <option value="null">All</option>
+</select>
+<div class="tableView">
+  <table class="table">
+    <div style="text-align: right; padding-right: 72px; margin-bottom: 5px;">
+      <button class="btn-dark" id="addbtn" onclick="add_metric(this)">
+        <i class="fa fa-plus-circle"></i>
+        Add New Screen Model
+      </button>
+    </div>
+    <thead>
+      <tr>
+        <th scope="col">Strategy</th>
+        <th scope="col">Metric</th>
+        <th scope="col">Operator</th>
+        <th scope="col">Range</th>
+      </tr>
+    </thead>
+    <tbody id="strategy-table">
+      <tr>
+      </tr>
+      
+    </tbody>
+  </table>
+</div>
+
+
+<div class="pagination" id="pagination">
+</div>
+
+
+
+</div>
+
+</body>
+</html>

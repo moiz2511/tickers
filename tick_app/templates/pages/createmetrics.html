@@ -1,0 +1,426 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title> Tickers App</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
+  <link href="{% static 'files/styles.css' %}" rel="stylesheet">
+  <script src="{% static 'files/cmetrics.js' %}"></script>
+
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/bbbootstrap/libraries@main/choices.min.css">
+  <script src="https://cdn.jsdelivr.net/gh/bbbootstrap/libraries@main/choices.min.js"></script>
+
+
+</head>
+<style>
+  .pagination {
+    display: inline-block;
+  }
+
+
+
+  .pagination a {
+    color: black;
+    float: left;
+    padding: 8px 16px;
+    text-decoration: none;
+    margin-right: 10px;
+  }
+
+  .pagaination_row {
+    display: flex;
+    width: 100%;
+    padding: 0 7%;
+    justify-content: flex-end;
+    align-items: center;
+
+  }
+
+  .pagination a.active {
+    background-color: gray;
+    color: white;
+    border-radius: 5px;
+  }
+
+  .pagination a:hover:not(.active) {
+    background-color: #ddd;
+    border-radius: 5px;
+  }
+
+  .more {
+    align-self: end;
+
+  }
+</style>
+
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'investing_styles' %}"> Context </a>
+      </li>
+      <li class="nav-item ">
+        <a class="nav-link" href="{% url 'index' %}"> Data Acquisition </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link active" href="{% url 'dp_investing_styles' %}"> Data Processing</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link " href="{% url 'data_analysis' %}"> Data Analysis</a>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="pl-4 alert alert-secondary">
+    <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'dp_investing_styles' %}"> Investing Style </span>
+    <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'model_dp' %}" class="ml-3"> Analysis Model </a></span>
+    <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'strategies' %}" class="ml-3"> Screen Model </span>
+    <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'ranges_dp' %}" class="ml-3"> Ranges  </a></span>
+    <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'aggragate_fiancials' %}" class="ml-3"> Aggregate Financials  </a></span>
+    <span class="title" id="reg_title"> <a style="color: #383d41; font-weight:bold;" href="{% url 'create_metrics' %}" class="ml-3"> Create Metrics </a></span>
+    <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'advancedRatios' %}" class="ml-3"> Advanced Metrics  </a></span>
+   </div>
+
+  <table id="createtable">
+    
+    <div style="text-align: right; padding-right: 92px;">  
+      <button class="btn-dark" id="addbtn" onclick="add_metric(this)">
+        <i class="fa fa-plus-circle"></i>
+        Add new metric
+      </button>
+    </div>
+
+    <form class="mt-3 ml-3" action="{% url 'create_metrics' %}" method="POST">
+      <tbody class="metrics-table">
+        <tr>
+          <th class="metrics-th">
+            Measure
+          </th>
+          <th class="metrics-th">
+            Category
+          </th>
+          <th class="metrics-th">
+            Metrics
+          </th>
+          <th class="metrics-th">
+            Code
+          </th>
+          <th class="metrics-th">
+            Numerator
+          </th>
+          <th class="metrics-th">
+            Denominator
+          </th>
+        </tr>
+        {% for i in c_ratios %}
+
+        <tr id="parent-row">
+          <td>
+            {{ i.measure }}
+
+
+          </td>
+
+
+          <td>
+            {{ i.category }}
+          </td>
+
+
+          <td>
+            {{ i.metrics }}
+          </td>
+
+
+          <td>
+            {{ i.code }}
+          </td>
+
+
+          <td>
+            {{ i.numerator }}
+          </td>
+
+          <td>
+            {{ i.denominator }}
+          </td>
+
+
+          <td class="hidden-icon" style="border: None;" data-id="row-{{ i.id }}" onclick="edit(this)">
+
+            <i class="fa fa-edit" aria-hidden="true"></i>
+
+          </td>
+          <td class="hidden-icon" style="border: None;" type="submit">
+
+            <button class="btn-dark" type="submit" data-id="row-{{ i.id }}" onclick="del(this)"> <i
+                class="fa fa-trash-o" aria-hidden="true"></i> </button>
+
+          </td>
+        </tr>
+
+        <tr class="editrow" id="row-{{ i.id }}">
+          <td>
+            <select class=" select_  mr-3 mt-3 " name="measure_input" id="measure-{{ i.id }}" placeholder="choose">
+              {% for k in c_measure%}
+              {% with v_measure=i.measure %}
+
+
+              {% if k == v_measure %}
+
+              <option selected>
+
+                {{ k }}
+
+              </option>
+
+              {% else %}
+
+              <option>
+
+                {{ k }}
+              </option>
+
+              {% endif %}
+              {% endwith %}
+              {% endfor %}
+
+            </select>
+
+          </td>
+          <td>
+            <select class=" select_  mr-3 mt-3 " name="category_input" id="category-{{ i.id }}" placeholder="choose">
+
+              {% for k in c_category%}
+              {% with v_category=i.category %}
+
+
+              {% if k == v_category %}
+
+              <option selected>
+
+                {{ k }}
+
+              </option>
+
+              {% else %}
+
+              <option>
+
+                {{ k }}
+              </option>
+
+              {% endif %}
+              {% endwith %}
+              {% endfor %}
+
+            </select>
+          </td>
+
+          <td>
+            <input type="text" name="metric_input" id="metric-{{ i.id }}" value={{ i.metrics }}>
+          </td>
+          <td>
+            <input type="text" name="code_input" id="code-{{ i.id }}" value={{ i.code }}>
+          </td>
+          <td>
+            <input list="brow" value={{ i.numerator }} class=" select_  mr-3 mt-3 " name="numerator_input"
+              id="numerator-{{ i.id }}" placeholder="choose">
+
+            <datalist id="brow">
+              {% for k in c_metrics%}
+
+
+              <option>
+
+                {{ k }}
+
+              </option>
+
+
+              {% endfor %}
+
+
+
+
+
+            </datalist>
+          </td>
+          <td>
+            <input list="brow" value={{ i.denominator }} class=" select_  mr-3 mt-3 " name="denominator_input"
+              id="denominator-{{ i.id }}" placeholder="choose">
+
+            <datalist id="brow">
+
+
+              {% for k in c_metrics%}
+
+              <option>
+
+                {{ k }}
+
+              </option>
+
+
+
+
+
+
+              {% endfor %}
+
+
+
+            </datalist>
+
+          </td>
+
+          <td style="border: None;">
+
+            <button class="btn-dark" type="submit" id="savebtn" data-id="{{ i.id }}" onclick="save_row(this)"> <i
+                class="fa fa-floppy-o" aria-hidden="true"></i> </button>
+          </td>
+        </tr>
+
+
+        {% endfor %}
+
+
+        <tr id="add-row" scope="row">
+          <td>
+            <select class=" select_  mr-3 mt-3 " name="measure_input" placeholder="choose">
+              {% for i in c_measure%}
+              <option>
+                {{ i }}
+              </option>
+              {% endfor %}
+
+            </select>
+
+          </td>
+          <td>
+            <select class=" select_  mr-3 mt-3 " name="category_input" placeholder="choose">
+              {% for i in c_category %}
+              <option>
+                {{ i }}
+              </option>
+              {% endfor %}
+            </select>
+          </td>
+
+          <td>
+            <input type="text" name="metric_input" id="metric_add">
+          </td>
+          <td>
+            <input type="text" name="code_input">
+          </td>
+          <td>
+            <input list="brow" class=" select_  mr-3 mt-3 " name="numerator_input" placeholder="choose">
+
+            <datalist id="brow">
+
+              {% for i in c_metrics%}
+              <option>
+                {{ i }}
+              </option>
+
+
+
+
+              {% endfor %}
+            </datalist>
+
+          </td>
+          <td>
+            <input list="brow" class=" select_  mr-3 mt-3 " name="denominator_input" placeholder="choose">
+
+            <datalist id="brow">
+
+              {% for i in c_metrics%}
+              <option>
+                {{ i }}
+              </option>
+              {% endfor %}
+            </datalist>
+
+          </td>
+
+          <td style="border: None;">
+
+            <button class="btn-dark" type="submit"> <i class="fa fa-floppy-o" aria-hidden="true"></i> </button>
+          </td>
+        </tr>
+
+
+
+
+      </tbody>
+
+  </table>
+
+  <textarea id="edit-metrics-txt" name="textarea" rows="4" cols="50">  </textarea>
+  </form>
+
+
+
+
+  {% if totalPages > 3 %}
+  <div class="pagaination_row">
+
+    <div class="pagination">
+      <a href="http://127.0.0.1:8000/create-metrics/?id={{page_obj|add:'-1'}}"
+        class="{% if i == page_obj %} active {%endif%}"> <i class="fa fa-angle-double-left" aria-hidden="true"></i></a>
+    </div>
+    <div class="pagination">
+      <a href="http://127.0.0.1:8000/create-metrics/?id={{index1}}"
+        class="{% if i == page_obj %} active {%endif%}">{{index1}} </a>
+    </div>
+    <div class="pagination">
+      <a href="http://127.0.0.1:8000/create-metrics/?id={{index2}}"
+        class="{% if i == page_obj %} active {%endif%}">{{index2}} </a>
+    </div>
+    <div class="pagination">
+      <a href="http://127.0.0.1:8000/create-metrics/?id={{page_obj}}"
+        class="{% if i == page_obj %} active {%endif%}">{{page_obj}} </a>
+    </div>
+    <div class="more">
+      <i class="fa fa-ellipsis-h" aria-hidden="true"></i>
+    </div>
+    <div class="pagination">
+      <a href="http://127.0.0.1:8000/create-metrics/?id={{currentPage}}"
+        class="{% if i == page_obj %} active {%endif%}">{{currentPage}} </a>
+    </div>
+
+    <div class="pagination">
+      <a href="http://127.0.0.1:8000/create-metrics/?id={{page_obj|add:1}}"
+        class="{% if i == page_obj %} active {%endif%}"> <i class="fa fa-angle-double-right" aria-hidden="true"></i></a>
+    </div>
+
+  </div>
+
+  {% endif %}
+
+
+  {% if totalPages <= 3 %} <div class="pagaination_row">
+
+    {% for i in pages %}
+    <div class="pagination">
+      <a href="http://127.0.0.1:8000/create-metrics/?id={{i}}" class="{% if i == page_obj %} active {% endif %}">{{i}}
+      </a>
+    </div>
+    {% endfor %}
+    </div>
+
+    {% endif %}
+
+</body>
+
+</html>

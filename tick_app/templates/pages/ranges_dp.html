@@ -1,0 +1,477 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title> Tickers App</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
+  <link href="{% static 'files/styles.css' %}" rel="stylesheet">
+  <script src="{% static 'files/ranges_dp.js' %}"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/bbbootstrap/libraries@main/choices.min.css">
+  <script src="https://cdn.jsdelivr.net/gh/bbbootstrap/libraries@main/choices.min.js"></script>
+  <script>
+
+    async function val() {
+      d = document.getElementById("dropdown_metric").value;
+      d2 = document.getElementById("dropdown_name").value
+      window.location.href = ` http://127.0.0.1:8000/ranges_dp/?id=1&category=${d}&category2=${d2}`
+      console.log("========", d);
+
+
+      var { get_data, current_page, page_data } = await getStrat();
+      const paginationRow = document.getElementById('pagination')
+      paginationRow.innerHTML = ``
+      handlePagination(page_data, current_page)
+
+      const tableRow = document.getElementById('metric-table')
+      tableRow.innerHTML = ``
+      get_data.forEach(element => {
+        tableRow.innerHTML += `<tr id='metric-row-${element.id}'>
+      <td id='metric-row-${element.id}-metric'> ${element.metric}</td>
+      <td id='metric-row-${element.id}-name'>${element.name}</td>
+      <td id='metric-row-${element.id}-source'> ${element.source}</td>
+      <td id='metric-row-${element.id}-min'> ${element.min}</td>
+      <td id='metric-row-${element.id}-max'> ${element.max}</td>
+      <td id='metric-row-${element.id}-below_min'> ${element.below_min}</td>
+      <td id='metric-row-${element.id}-equal_min_max'> ${element.equal_min_max}</td>
+      <td id='metric-row-${element.id}-between_min_max'> ${element.between_min_max}</td>
+      <td id='metric-row-${element.id}-above_max'> ${element.above_max}</td>
+
+      <td class="hidden-icon" style="border: None;" data-id='metric-row-${element.id}' onclick="edit(${element.id})">
+      <i class="fa fa-edit" aria-hidden="true"></i> 
+      </td>
+      <td class="hidden-icon" style="border: None;" data-id='metric-row-${element.id}' onclick="del(${element.id})">
+        <i class="fa fa-trash-o"  aria-hidden="true"></i> 
+      </td>
+      
+      </tr>`
+      });
+
+    }
+    function handlePagination(pages, current) {
+      //edit
+      let val = document.getElementById("dropdown_metric").value
+      let category = val ? val : "All"
+      let val2=document.getElementById("dropdown_name").value
+      let category2=val2?val2:"All"
+      if (pages < 20) {
+        for (i = 1; i <= pages; i++) {
+          let opt = document.createElement("a");
+          opt.value = i;
+          opt.innerHTML = i;
+          if (i == current) {
+            opt.className = "active"
+          }
+          //edit
+          function val() {
+            d = document.getElementById("dropdown_metric").value;
+            console.log("aadarsh", d);
+        d2 = document.getElementById("dropdown_name").value;
+
+          }
+          opt.href = `http://127.0.0.1:8000/ranges_dp/?id=${i}&category=${category}&category2=${category2}`
+          console.log(opt)
+          $('#pagination').append(opt);
+        }
+
+      } else {
+        var arr = [];
+        current = current
+
+
+        let index2 = current - 2;
+        arr.push(index2)
+
+        let index1 = current - 1;
+        arr.push(index1)
+
+        let index = current;
+        arr.push(index)
+
+        let nextIndex = current + 1;
+
+        arr.push(nextIndex)
+
+        if (current == 1) {
+
+        } else {
+          let opt = document.createElement("a");
+          opt.value = current - 1;
+          opt.innerHTML = `<i class="fa fa-angle-double-left"></i>`
+
+          opt.href = `http://127.0.0.1:8000/ranges_dp/?id=${index1}&category=${category}&category2=${category2}`
+          $('#pagination').append(opt);
+        }
+
+
+        for (let i = 0; i < arr.length; i++) {
+          if (arr[i] > 0) {
+            if (arr[i] <= pages) {
+              let opt = document.createElement("a");
+              opt.value = arr[i];
+              opt.innerHTML = arr[i];
+              if (arr[i] == current) {
+                opt.className = "active"
+              }
+              opt.href = `http://127.0.0.1:8000/ranges_dp/?id=${arr[i]}&category=${category}&category2=${category2}`
+              $('#pagination').append(opt);
+            }
+          }
+
+        }
+
+        if (current == pages) {
+
+        } else {
+          let right = document.createElement("a");
+
+          right.value = current - 1;
+          right.innerHTML = `<i class="fa fa-angle-double-right"></i>`
+
+          right.href = "http://127.0.0.1:8000/ranges_dp/?id=" + nextIndex
+          $('#pagination').append(right);
+        }
+
+
+      }
+
+
+    }
+
+    function edit(el) {
+
+      let rowId = 'metric-row-' + el
+      let metricTdId = 'metric-row-' + el + '-metric'
+      let nameTdId = 'metric-row-' + el + '-name'
+      let sourceTdId = 'metric-row-' + el + '-source'
+      let minTdId = 'metric-row-' + el + '-min'
+      let maxTdId = 'metric-row-' + el + '-max'
+      let belowTdId = 'metric-row-' + el + '-below_min'
+      let equalTdId = 'metric-row-' + el + '-equal_min_max'
+      let betweenTdId = 'metric-row-' + el + '-between_min_max'
+      let aboveTdId = 'metric-row-' + el + '-above_max'
+
+
+
+      let element = document.getElementById(rowId)
+      let metricVal = document.getElementById(metricTdId).innerText
+      let nameVal = document.getElementById(nameTdId).innerText
+      let sourceVal = document.getElementById(sourceTdId).innerText
+      let minVal = document.getElementById(minTdId).innerText
+      let maxVal = document.getElementById(maxTdId).innerText
+      let belowVal = document.getElementById(belowTdId).innerText
+      let equalVal = document.getElementById(equalTdId).innerText
+      let betweenVal = document.getElementById(betweenTdId).innerText
+      let aboveVal = document.getElementById(aboveTdId).innerText
+
+
+
+
+
+
+      element.innerHTML = `<tr id='${rowId}' >
+      <td  id='${metricTdId}'><input name="metricUpdate" value='${metricVal}' id="metricUpdateID"/></td>
+      <td  id='${nameTdId}'><input name="nameUpdate" value='${nameVal}' id="nameUpdateID"/></td>
+      <td  id='${sourceTdId}'> <input name="sourceUpdate" value='${sourceVal}' id="sourceUpdateID"/></td>
+      <td  id='${minTdId}'> <input name="minUpdate" value='${minVal}' id="minUpdateID"/></td>
+      <td  id='${maxTdId}'> <input name="maxUpdate" value='${maxVal}' id="maxUpdateID"/></td>
+      <td  id='${belowTdId}'> <input name="belowUpdate" value='${belowVal}' id="belowUpdateID"/></td>
+      <td  id='${equalTdId}'> <input name="equalUpdate" value='${equalVal}' id="equalUpdateID"/></td>
+      <td  id='${betweenTdId}'> <input name="betweeenUpdate" value='${betweenVal}' id="betweeenUpdateID"/></td>
+      <td  id='${aboveTdId}'> <input name="aboveUpdate" value='${aboveVal}' id="aboveUpdateID"/></td>
+
+      <td style="border: None;" onclick="save_row(${el})">            
+        <i class="fa fa-floppy-o" aria-hidden="true"></i> 
+      </td>
+      </tr>`
+
+    }
+    async function handleApiCalls() {
+      document.getElementById("tableDiv").className = "hideTable";
+      document.getElementById("spinner").className = "spinner-border";
+      var data = await getDropDown();
+      // let catogery ="All"
+      //  let catogery2 ="All"
+      const {
+        dropdown_metric,
+        dropdown_name
+      } = data
+      console.log(dropdown_metric, dropdown_name);
+      const dropDownVal = document.getElementById('dropdown_metric');
+      for (let i = 0; i < dropdown_metric.length; i++) {
+        let opt = document.createElement("option");
+        opt.value = dropdown_metric[i]; //or i, depending on what you need to do
+        opt.innerHTML = dropdown_metric[i];
+        $('#dropdown_metric').append(opt); //Chuck it into the dom here if you want
+      }
+
+      const dropdown_nameEle = document.getElementById('dropdown_name')
+      for (let i = 0; i < dropdown_name.length; i++) {
+        let opt = document.createElement("option");
+        opt.value = dropdown_name[i]; //or i, depending on what you need to do
+        opt.innerHTML = dropdown_name[i];
+        $('#dropdown_name').append(opt); //Chuck it into the dom here if you want
+      }
+      let url = window.location.search
+      console.log("URL", url)
+      //  console.log("happyyy",url)
+      let catogery;
+      let catogery2;
+
+      if (url) {
+        catogery = url.substring(url.lastIndexOf("category=")).split("=")[1].split("&")[0]
+
+        // catogery2 = url.substring(url.lastIndexOf("category2=")).split("=")[1]
+        catogery2 = url.substring(url.lastIndexOf("category2=")).split("=")[1].replaceAll("%20"," ")
+console.log("catt2",catogery2)
+      }
+
+
+
+
+
+
+
+
+
+
+      if (catogery) {
+        let opt = document.getElementById("dropdown_metric")
+        console.log("DOCUMENT GETDROPDOWN METRIC,", opt)
+        opt.value = catogery
+      }
+
+      if (catogery2) {
+        let opt = document.getElementById("dropdown_name")
+        opt.value = catogery2
+      }
+      var { get_data, page_data, current_page } = await getStrat();
+      const paginationRow = document.getElementById('pagination')
+
+      const tableRow = document.getElementById('metric-table')
+      tableRow.innerHTML = ``
+      handlePagination(page_data, current_page)
+
+      get_data.forEach(element => {
+        tableRow.innerHTML += `<tr id='metric-row-${element.id}'>
+      <td  id='metric-row-${element.id}-metric'> ${element.metric}</td>
+      <td  id='metric-row-${element.id}-name'>${element.name}</td>
+      <td  id='metric-row-${element.id}-source'> ${element.source}</td>
+      <td  id='metric-row-${element.id}-min'> ${element.min}</td>
+      <td  id='metric-row-${element.id}-max'> ${element.max}</td>
+      <td  id='metric-row-${element.id}-below_min'> ${element.below_min}</td>
+      <td  id='metric-row-${element.id}-equal_min_max'> ${element.equal_min_max}</td>
+      <td  id='metric-row-${element.id}-between_min_max'> ${element.between_min_max}</td>
+      <td  id='metric-row-${element.id}-above_max'> ${element.above_max}</td>
+
+      <td class="hidden-icon" style="border: None;" data-id='metric-row-${element.id}' onclick="edit(${element.id})">
+      <i class="fa fa-edit" aria-hidden="true"></i> 
+      </td>
+      <td class="hidden-icon" style="border: None;" data-id='metric-row-${element.id}' onclick="del(${element.id})">
+        <i class="fa fa-trash-o"  aria-hidden="true"></i> 
+      </td>
+      
+      </tr>`
+      });
+
+      document.getElementById("tableDiv").className = "";
+      document.getElementById("spinner").className = "hideTable";
+
+
+    }
+  </script>
+
+</head>
+<style>
+  .error {
+    background-color: red;
+    color: white;
+  }
+
+  .pagination {
+    display: flex;
+    width: 100%;
+    flex-direction: row;
+    justify-content: end;
+    padding-right: 130px;
+  }
+
+
+  .pagination a {
+    color: black;
+    float: left;
+    padding: 8px 16px;
+    text-decoration: none;
+    margin-right: 10px;
+
+  }
+
+  .pagination a.active {
+    background-color: gray;
+    color: white;
+    border-radius: 5px;
+  }
+
+  .pagination a:hover:not(.active) {
+    background-color: #ddd;
+    border-radius: 5px;
+  }
+
+  th {
+    border: 1px solid black;
+  }
+
+  th {
+    background: grey;
+    color: white;
+  }
+
+  td {
+
+    background: white;
+    color: black;
+
+  }
+
+  td>input {
+    border: 1px solid transparent;
+    background-color: #f1f1f1;
+    font-size: 12px;
+    padding: 0px;
+    width: 100%;
+
+
+  }
+
+  #metric_table {
+    width: 85%;
+    margin-left: 7%;
+    margin-top: 5%;
+  }
+  #dropdown_name{
+    width: max-content;
+  }
+
+  .editrow {
+    width: 100%;
+  }
+
+  .hidden-icon {
+    width: 20px;
+  }
+
+  .tableView {
+    padding: 10px 70px;
+  }
+
+  .hideTable {
+    display: none;
+  }
+
+  .spinnerDiv {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+</style>
+
+<body onload='handleApiCalls()'>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'investing_styles' %}"> Context </a>
+      </li>
+      <li class="nav-item ">
+        <a class="nav-link" href="{% url 'index' %}"> Data Acquisition </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link active" href="{% url 'dp_investing_styles' %}"> Data Processing</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link " href="{% url 'data_analysis' %}"> Data Analysis</a>
+      </li>
+
+
+
+    </ul>
+    </div>
+  </nav>
+
+
+
+
+
+  <div class="pl-4 alert alert-secondary">
+    <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'dp_investing_styles' %}"> Investing Style </span>
+    <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'model_dp' %}" class="ml-3"> Analysis Model </a></span>
+    <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'strategies' %}"> Screen Model </span>
+    <span class="title" id="reg_title"> <a style="color: #383d41; font-weight:bold;" href="{% url 'ranges_dp' %}" class="ml-3"> Ranges  </a></span>
+    <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'aggragate_fiancials' %}" class="ml-3"> Aggregate Financials  </a></span>
+    <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'create_metrics' %}" class="ml-3"> Create Metrics </a></span>
+    <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'advancedRatios' %}" class="ml-3"> Advanced Metrics  </a></span>
+  </div>
+  <div class="spinnerDiv">
+    <div class="hideTable" role="status" id="spinner">
+      <span class="visually-hidden"></span>
+    </div>
+  </div>
+
+  <div id="tableDiv" class="">
+
+    <label for="drop" style="padding-left:  70px;">Metrics</label>
+
+    <select id="dropdown_metric" name="drop" onchange="val()">
+      <option value="null">All</option>
+    </select>
+
+    <label for="drop" style="padding-left:10px;">Range</label>
+
+    <select id="dropdown_name"  name="drop" onchange="val()">
+      <option value="null">All</option>
+    </select>
+    <div class="tableView">
+      <table class="table">
+        <div style="text-align: right; padding-right: 72px; margin-bottom: 5px;">
+        <button class="btn-dark" id="addbtn" onclick="add_metric()">
+          <i class="fa fa-plus-circle"></i>
+          Add new Range
+        </button>
+        </div>
+        <thead>
+          <tr>
+            <th scope="col">Metrics</th>
+            <th scope="col">name</th>
+            <th scope="col">Source</th>
+            <th scope="col">Min</th>
+            <th scope="col">max</th>
+            <th scope="col">Below min</th>
+            <th scope="col">Equal min or max</th>
+            <th scope='col'>Between min and max</th>
+            <th scope='col'>Above max</th>
+
+          </tr>
+        </thead>
+        <tbody id="metric-table">
+          <tr>
+          </tr>
+
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination" id="pagination">
+    </div>
+  </div>
+
+</body>
+
+</html>

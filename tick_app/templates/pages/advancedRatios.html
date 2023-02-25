@@ -1,0 +1,435 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title> Tickers App</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
+  <link href="{% static 'files/styles.css' %}" rel="stylesheet">
+  <script src="{% static 'files/advancedRatios.js' %}"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/bbbootstrap/libraries@main/choices.min.css">
+  <script src="https://cdn.jsdelivr.net/gh/bbbootstrap/libraries@main/choices.min.js"></script>
+ <script>
+
+async function val() {
+    d = document.getElementById("dropDownVal").value;
+    var {get_data} = await getStrat(d);
+
+    const tableRow =document.getElementById('advancedRatios-table')
+    
+    tableRow.innerHTML =``
+    get_data.forEach(element => {
+     tableRow.innerHTML+= `<tr id='advancedRatios-row-${element.id}'>
+      <td contenteditable='false' id='advancedRatios-row-${element.id}-strategy'> ${element.strategy}</td>
+      <td contenteditable='false' id='advancedRatios-row-${element.id}-metric'>${element.metric}</td>
+      <td contenteditable='false' id='advancedRatios-row-${element.id}-operator'> ${element.operator}</td>
+      <td contenteditable='false' id='advancedRatios-row-${element.id}-range'> ${element.range}</td>
+      <td class="hidden-icon" style="border: None;" data-id='advancedRatios-row-${element.id}' onclick="edit(${element.id})">
+      <i class="fa fa-edit" aria-hidden="true"></i> 
+      </td>
+      <td class="hidden-icon" style="border: None;" data-id='advancedRatios-row-${element.id}' onclick="del(${element.id})">
+        <i class="fa fa-trash-o"  aria-hidden="true"></i> 
+      </td>
+      
+      </tr>`
+   });
+
+}
+
+
+function handlePagination(pages,current) {
+
+
+if(pages < 3){
+    for(i=1;i<=pages;i++){
+    let opt = document.createElement("a");
+      opt.value = i; 
+      opt.innerHTML = i; 
+      if(i == current){
+        opt.className = "active"
+      }
+      opt.href=  "http://127.0.0.1:8000/advancedRatios/?id="+i
+      console.log(opt)
+      $('#pagination').append(opt); 
+  }
+  }else{
+    var arr =[];
+    current=current
+
+
+    let index2 = current-2;
+    arr.push(index2)
+
+    let index1= current-1;
+    arr.push(index1)
+
+    let index =current;
+    arr.push(index)
+
+    let nextIndex = current+1;
+
+    arr.push(nextIndex)
+
+    if(current == 1){
+
+    }else{
+      let opt = document.createElement("a");
+      opt.value = current-1; 
+      opt.innerHTML = `<i class="fa fa-angle-double-left"></i>`
+    
+      opt.href=  "http://127.0.0.1:8000/advancedRatios/?id="+index1
+      $('#pagination').append(opt); 
+    }
+    
+    
+for (let i=0 ; i<arr.length ;i++){
+if(arr[i]>0){
+  if(arr[i] <= pages){
+  let opt = document.createElement("a");
+    opt.value = arr[i]; 
+      opt.innerHTML = arr[i]; 
+      if(arr[i] == current){
+        opt.className = "active"
+      }
+      opt.href=  "http://127.0.0.1:8000/advancedRatios/?id="+arr[i]
+      $('#pagination').append(opt); 
+}}
+
+}
+
+if(current ==pages){
+
+}else{
+let right = document.createElement("a");
+
+right.value = current-1; 
+right.innerHTML = `<i class="fa fa-angle-double-right"></i>`
+    
+right.href=  "http://127.0.0.1:8000/advancedRatios/?id="+nextIndex
+      $('#pagination').append(right); 
+}
+
+
+}
+
+
+}
+
+function edit(el){
+  console.log(el)
+
+
+  let rowId = 'advancedRatios-row-'+el
+  console.log(rowId)
+  let measureTdId = 'advancedRatios-row-'+el+'-measure'
+  let categoryTdId = 'advancedRatios-row-'+el+'-category'
+  let metricTdId = 'advancedRatios-row-'+el+'-metric'
+  let codeTdId = 'advancedRatios-row-'+el+'-code'
+  let item1TdId = 'advancedRatios-row-'+el+'-item1'
+  let operator1TdId = 'advancedRatios-row-'+el+'-operator1'
+  let item2TdId = 'advancedRatios-row-'+el+'-item2'
+  let operator2TdId = 'advancedRatios-row-'+el+'-operator2'
+  let item3TdId = 'advancedRatios-row-'+el+'-item3'
+  let operator3TdId = 'advancedRatios-row-'+el+'-operator3'
+  let item4TdId = 'advancedRatios-row-'+el+'-item4'
+  let operator4TdId = 'advancedRatios-row-'+el+'-operator4'
+  let item5TdId = 'advancedRatios-row-'+el+'-item5'
+
+ 
+
+
+
+  let element =document.getElementById(rowId)
+  let measureVal= document.getElementById(measureTdId).innerText
+  let categoryVal= document.getElementById(categoryTdId).innerText
+  let metricVal= document.getElementById(metricTdId).innerText
+  let codeVal= document.getElementById(codeTdId).innerText
+  let item1Val= document.getElementById(item1TdId).innerText
+  let operator1Val= document.getElementById(operator1TdId).innerText
+  let item2Val= document.getElementById(item2TdId).innerText
+  let operator2Val= document.getElementById(operator2TdId).innerText
+  let item3Val= document.getElementById(item3TdId).innerText
+  let operator3Val= document.getElementById(operator3TdId).innerText
+  let item4Val= document.getElementById(item4TdId).innerText
+  let operator4Val= document.getElementById(operator4TdId).innerText
+  let item5Val= document.getElementById(item5TdId).innerText
+
+
+
+
+  element.innerHTML = `
+    <tr id='${rowId}' >
+      <td >${measureVal}</td>
+      <td > ${categoryVal}</td>
+      <td > <input value='${metricVal}' name="metricUpdate" id="metricARUpdateID"/></td>
+      <td > <input value='${codeVal}' name="codeUpdate" id="codeUpdateID"/></td>
+      <td > ${item1Val}</td>
+      <td > ${operator1Val}</td>
+      <td > ${item2Val}</td>
+      <td > ${operator2Val}</td>
+      <td > ${item3Val}</td>
+      <td > ${operator3Val}</td>
+      <td > ${item4Val}</td>
+      <td > ${operator4Val}</td>
+      <td > ${item5Val}</td>
+
+
+      <td style="border: None;" onclick="save_row(${el})">            
+      <i class="fa fa-floppy-o" aria-hidden="true"></i> 
+      </td>
+    </tr>
+  `;
+
+}
+   async function handleApiCalls() {
+    document.getElementById("tableDiv").className = "hideTable";
+    document.getElementById("spinner").className = "spinner-border";
+
+    var {get_data,page_data,current_page} = await getStrat();
+
+    const paginationRow =document.getElementById('pagination')
+ 
+    const tableRow =document.getElementById('strategy-table')
+    tableRow.innerHTML =``
+    handlePagination(page_data,current_page)
+
+   
+  
+    get_data.forEach(element => {
+     tableRow.innerHTML+= `<tr id='advancedRatios-row-${element.id}'>
+      <td contenteditable='false' id='advancedRatios-row-${element.id}-measure'> ${element.measure}</td>
+      <td contenteditable='false' id='advancedRatios-row-${element.id}-category'>${element.category}</td>
+      <td contenteditable='false' id='advancedRatios-row-${element.id}-metric'> ${element.metric}</td>
+      <td contenteditable='false' id='advancedRatios-row-${element.id}-code'> ${element.code}</td>
+      <td contenteditable='false' id='advancedRatios-row-${element.id}-item1'> ${element.item1}</td>
+      <td contenteditable='false' id='advancedRatios-row-${element.id}-operator1'> ${element.operator1}</td>
+    
+      <td contenteditable='false' id='advancedRatios-row-${element.id}-item2'> ${element.item2}</td>
+      <td contenteditable='false' id='advancedRatios-row-${element.id}-operator2'> ${element.operator2}</td>
+      <td contenteditable='false' id='advancedRatios-row-${element.id}-item3'> ${element.item3}</td>
+      <td contenteditable='false' id='advancedRatios-row-${element.id}-operator3'> ${element.operator3}</td>
+      <td contenteditable='false' id='advancedRatios-row-${element.id}-item4'> ${element.item4}</td>
+      <td contenteditable='false' id='advancedRatios-row-${element.id}-operator4'> ${element.operator4}</td>
+      <td contenteditable='false' id='advancedRatios-row-${element.id}-item5'> ${element.item5}</td>
+
+
+      <td class="hidden-icon" style="border: None;" data-id='advancedRatios-row-${element.id}' onclick="edit(${element.id})">
+      <i class="fa fa-edit" aria-hidden="true"></i> 
+      </td>
+      <td class="hidden-icon" style="border: None;" data-id='advancedRatios-row-${element.id}' onclick="del(${element.id})">
+        <i class="fa fa-trash-o"  aria-hidden="true"></i> 
+      </td>
+      </tr>`
+   });
+    // var data = await getDropDown();
+    // const dropDownVal = document.getElementById('dropDownVal')
+
+    // for (let i = 0; i < data.length; i++) {
+    //     let opt = document.createElement("option");
+    //     opt.value = data[i]; //or i, depending on what you need to do
+    //     opt.innerHTML = data[i]; 
+    //     $('#dropDownVal').append(opt); //Chuck it into the dom here if you want
+    //  } 
+
+     document.getElementById("tableDiv").className = "";
+     document.getElementById("spinner").className = "hideTable";
+
+
+   }
+ </script>
+  
+</head>
+<style>
+.container {
+    border: 1px solid rgba(0, 0, 0, .11);
+    
+    padding: 10px;
+    width: 500px
+}
+
+.controls-item {
+    display: inline-block;
+}
+
+.btn {
+    margin: 1px;
+}
+
+.pagination {
+    display: flex;
+    width: 100%;
+    flex-direction: row;
+    justify-content: end;
+    padding-right: 130px;
+}
+
+
+.pagination a {
+  color: black;
+  float: left;
+  padding: 8px 16px;
+  text-decoration: none;
+  margin-right: 10px;
+}
+
+.pagination a.active {
+  background-color: gray;
+  color: white;
+  border-radius: 5px;
+}
+
+.pagination a:hover:not(.active) {
+  background-color: #ddd;
+  border-radius: 5px;
+}
+
+ th {
+  border: 1px solid black;
+}
+th{
+    background: grey;
+    color:white;
+}
+td{
+
+    background: white;
+    color:black;
+
+}
+td > input {
+    border: 1px solid transparent;
+    background-color: #f1f1f1;
+    font-size: 12px;
+    padding: 0px;
+    width: 100%;
+
+
+}
+#strategy_table  {
+    width: 85%;
+    margin-left: 7%;
+  margin-top: 5%;
+}
+.editrow{
+    width: 100%;
+}
+
+.hidden-icon{
+  width: 20px;
+}
+.tableView{
+  padding: 10px 70px;
+}
+
+.hideTable{
+  display: none;
+}
+
+.spinnerDiv{
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+</style>
+<body onload= 'handleApiCalls()'>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'investing_styles' %}"> Context </a>
+      </li>
+      <li class="nav-item ">
+        <a class="nav-link" href="{% url 'index' %}"> Data Acquisition </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link active" href="{% url 'dp_investing_styles' %}"> Data Processing</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link "  href="{% url 'data_analysis' %}"> Data Analysis</a>
+      </li>
+
+   
+
+    </ul>
+  </div>
+</nav>
+
+
+
+
+
+<div class="pl-4 alert alert-secondary">
+  <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'dp_investing_styles' %}"> Investing Style </span>
+  <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'model_dp' %}" class="ml-3"> Analysis Model </a></span>
+  <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'strategies' %}" class="ml-3"> Screen Model </span>
+  <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'ranges_dp' %}" class="ml-3"> Ranges  </a></span>
+  <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'aggragate_fiancials' %}" class="ml-3"> Aggregate Financials  </a></span>
+  <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'create_metrics' %}" class="ml-3"> Create Metrics </a></span>
+  <span class="title" id="reg_title"> <a style="color: #383d41; font-weight:bold;" href="{% url 'advancedRatios' %}" class="ml-3"> Advanced Metrics  </a></span>
+</div>
+<div class="spinnerDiv">
+  <div class="hideTable" role="status" id="spinner">
+    <span class="visually-hidden"></span>
+  </div>
+</div>
+
+<div id="tableDiv" class="">
+
+<div class="tableView">
+  <table class="table">
+    
+    <div style="text-align: right; padding-right: 72px; margin-bottom: 5px;"> 
+      <button class="btn-dark" id="addbtn" onclick="add_metric(this)">
+        <i class="fa fa-plus-circle"></i>
+        Add new Advanced Metric
+      </button>
+      
+    </div>
+    <thead>
+      <tr>
+        <th scope="col">Measure</th>
+        <th scope="col">Category</th>
+        <th scope="col">Metric</th>
+        <th scope="col">Code</th>
+        <th scope="col">Item1</th>
+        <th scope="col">Operator</th>
+
+        <th scope="col">Item2</th>
+        <th scope="col">Operator</th>
+
+        <th scope="col">Item3</th>
+        <th scope="col">Operator</th>
+
+        <th scope="col">Item4</th>
+        <th scope="col">Operator</th>
+
+        <th scope="col">Item5</th>
+
+      </tr>
+    </thead>
+    <tbody id="strategy-table">
+      <tr>
+      </tr>
+      
+    </tbody>
+  </table>
+</div>
+
+<div class="pagination" id="pagination">
+</div>
+
+
+
+</div>
+
+</body>
+</html>

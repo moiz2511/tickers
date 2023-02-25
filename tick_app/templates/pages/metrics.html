@@ -1,0 +1,263 @@
+
+{% load static %}
+
+<form class=" mt-5 ml-3"  action="{% url 'data_analysis' %}"  onkeydown="return event.key != 'Enter';" method="POST" >
+    <label class='mr-3 mt-3'> Company </label>
+
+    <div class="autocomplete ">
+      <input id="myInput"  type="text" name="Company" autocomplete="off" placeholder="Company">
+    </div>
+
+
+    
+  
+    <label class='mr-3 mt-3 ml-3'> Tools </label>
+
+
+
+
+
+    <select class=" select_type   mr-2 mt-3 " id="types" name='types' placeholder="choose">
+      <option> </option>
+         
+            {% for d in types  %}
+         
+            <option>{{ d }} </option>
+     
+            {% endfor %}
+          </select> 
+
+
+    <label class='mr-3 mt-3'> Measure </label> 
+
+
+    <select class=" select_  mr-3 mt-3 " name='sc' id='sc' placeholder="choose">
+        
+    
+    
+
+
+    </select> 
+
+
+    <label class='mr-3 mt-3'> Category </label> 
+
+
+    <select class=" select_  mr-3 mt-3 " id="cat_" name='cat' placeholder="choose">
+        
+    
+
+
+    </select> 
+
+
+    <label class='ml-2 mt-3 mr-2'> Metrics </label> 
+  
+        
+    <input list="brow" autocomplete='off' class=" select_  mr-3 mt-3 " style="width: 20%;" id="metrics" onchange="multiselect(this); "   placeholder="choose" >
+    <datalist id="brow" class="metrics-html">
+
+    </datalist>
+    
+         
+     
+
+
+
+
+    <label class='mr-3 mt-3' style="margin-left:1.5% ;"> From </label> 
+    <label class='mr-3 mt-3'>
+    <input type="text" class="form-control" id="from" name="from" placeholder="Year" onchange="fromfunc(this)"> </label> 
+
+
+    <label class='mr-3 mt-3'> To </label> 
+    <label class='mr-3 mt-3'>
+    <input type="text" class="form-control" id="to" name="to" placeholder="Year" onchange="tofunc(this)" > </label>
+
+    <label class='ml-2 mt-3 mr-2'> Ranges </label> 
+    
+    <input list="brow_" autocomplete='off' class=" select_  mr-3 mt-3 " onclick="suggestranges()" style="width: 20%;" onchange="range(this)"   placeholder="choose" >
+    <datalist id="brow_" class="ranges-html" >
+    
+    </datalist>
+    
+  
+  
+    <button type="submit" class="btn btn-dark mb-2" onclick="submitdata()">Submit</button>
+
+   
+  
+    <textarea id="txt" name="textarea" rows="4" cols="50">  </textarea>
+
+    <textarea id="txt-metrics" name="textmetrics" rows="4" cols="50">  </textarea>
+
+    <textarea id="range-metrics" name="rangemetrics" rows="4" cols="50">  </textarea>
+
+  </form>
+
+  <button class="btn-dark" id="resetbtn" onclick="resetdata()"> Reset Parameters </button>
+
+  <br>  
+  <label class='ml-3' name="companies"> Companies:   </label> 
+  <span class="  ml-2" id="text"></span> <span class="  ml-2" id="c-text"></span> <span  class=" ml-2"> </span> 
+  <span class="  ml-2" id="max-text"></span> <span  class=" ml-2"> </span> 
+  <span class = "ml-2"> Tools: </span>   <span class="  ml-2" id="type-text"></span> 
+  <span class = "ml-2"> Measure: </span>   <span class="  ml-2" id="sc-text"> </span>
+  <span class = "ml-2"> Category: </span>   <span class="  ml-2" id="cat-text"></span>
+
+  <span class = "ml-2"> Metrics: </span>   <span class="  ml-2" id="m-text"></span>
+  <span class = "ml-2"  id="m-text-max"> </span>  
+  <span class = "ml-2">From:</span>
+  <span class = "ml-2"  id="from-text"> </span> 
+  <span class = "ml-2">To:</span> 
+  <span class = "ml-2"  id="to-text"> </span> 
+
+  <span class = "ml-2"> Ranges: </span>   <span class="  ml-2" id="m-ranges"></span>  
+  <span class = "ml-2"  id="m-ranges-max"> </span>
+
+
+
+  
+
+
+
+
+  <br>
+  <br>
+  
+  {% if plot_bar %}
+  <span class='mr-2 ml-4'> Line Chart </span>
+  <label class="switch">
+   <input type="checkbox" id="checkbox">
+    <span class="slider round" id="slider"></span> 
+  </label>
+  <span > Bar Diagram </span>
+
+  <span class='ml-3 circle'> % </span>
+
+  
+  <!-- {% for i in return_list %}
+
+    {% if 'Luxury Goods Average' in i.company_name %}
+    <label for="sectorAvg" style="margin-left: 10px;">
+      Sector Average
+    </label>
+    <input type="checkbox" id="sectorAvg" onclick="handleCheckBoxClick()"/>
+
+    {% elif 'Luxury Goods Median' in i.company_name %}
+    <label for="sectorMedian" style="margin-left: 30px;">
+      Sector mean
+    </label>
+    <input type="checkbox" id="sectorMedian"/>
+
+    
+    {% elif 'Consumer Cyclical Average' in i.company_name %}
+    <label for="IndustryAvg" style="margin-left: 30px;">
+      Industy Average
+    </label>
+    <input type="checkbox" id="IndustryAvg"/>
+    {% elif 'Consumer Cyclical Median' in i.company_name %}
+    <label for="IndustryMedian" style="margin-left: 30px;">
+      Industry mean
+    </label>
+    <input type="checkbox" id="IndustryMedian"/>
+    {% endif %}
+  {%endfor %} -->
+
+  {% endif %}
+  
+
+
+  <div id="line">
+  {% autoescape off %}
+  {{ plot_line }}
+  {% endautoescape %}
+</div>
+
+<div id="bar">
+  {% autoescape off %}
+  {{ plot_bar }}
+  {% endautoescape %}
+</div>
+{% if return_list %}
+
+<div class="download" onclick="exportTableToExcel('analysis-table')"><i class="fa fa-table" aria-hidden="true"></i> Export Table </div>
+
+  <table class="analysis-table" id ="analysis-table">
+
+    <tbody>
+
+      <th> Company </th>
+      <th> Symbol </th>
+      <th> Metric </th>
+      {% for i in date_range %}
+      <th> {{i}} </th>
+      {% endfor %}
+      <th> Mean </th>
+      <th> SD </th>
+      <th> RSD </th>
+      <th> Nbr of Years</th>
+      {% for j in return_list %}
+  
+      <tr class="metric_row">
+
+      <td> {{ j.company_name }} </td>
+      <td> {{ j.symbol }} </td>
+      <td>  {{ j.metric }} </td>
+      {% for k in j.data_l %}
+
+      {% if forloop.last %} 
+      <td >  {{ k }}</td>
+      {% else %}
+      <td class="percent" >  {{ k }}</td>
+      {% endif %}
+      {% endfor %}
+      <td> {{ n_years }}</td>
+ 
+      {% endfor %}
+   
+   
+
+
+
+
+      </tr>
+
+      </tbody>
+  </table>
+
+  {% endif %}
+
+
+</p> 
+  
+ 
+
+
+
+{% block body %}
+{% endblock %}
+{% if companies %}
+
+<div class="hid" id="h-company">{{ companies  }}</div>
+<div class="hid" id="h-type">{{ tool }}</div>
+<div class="hid" id="h-sc">{{ sc  }}</div>
+<div class="hid" id="h-cat">{{ cat  }}</div>
+
+<div class="hid" id="h-from">{{ from  }}</div>
+<div class="hid" id="h-to">{{ to  }}</div>
+<div class="hid" id="h-metrics">{{ metrics  }}</div>
+<div class="hid" id="h-ranges">{{ ranges  }}</div>
+
+
+
+<script src="{% static 'files/danalysis_post.js' %}"></script>
+
+{% endif %}
+
+<script src="{% static 'files/danalysis_metric.js' %}"></script>
+
+
+
+
+

@@ -1,0 +1,501 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title> Tickers App</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
+  <link href="{% static 'files/styles.css' %}" rel="stylesheet">
+  <script src="{% static 'files/aggragate_fiancials.js' %}"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/bbbootstrap/libraries@main/choices.min.css">
+  <script src="https://cdn.jsdelivr.net/gh/bbbootstrap/libraries@main/choices.min.js"></script>
+ <script>
+console.log("htmllllll")
+async function val() {
+// d=document.getElementById('dropdown_view').value
+// d2=document.getElementById('dropdown_item').value
+// d3=document.getElementById('dropdown_operator').value
+// window.location.href=`http://127.0.0.1:8000/aggragate_fiancials/?id=1&category=${d}&category2=${d2}&category3=${d3}`
+// console.log("=====",d,d2,d3)      
+
+
+var {get_data,page_data,current_page} = await getModel();
+const paginationRow=document.getElementById("pagination")
+paginationRow.innerHTML=``
+handlePagination(page_data,current_page)
+    const tableRow =document.getElementById('model-table')
+    tableRow.innerHTML =``
+    get_data.forEach(element => {
+     tableRow.innerHTML+=  `<tr id='model-row-${element.id}'>
+      <td  id='model-row-${element.id}-view'> ${element.view}</td>
+      <td  id='model-row-${element.id}-name'>${element.name}</td>
+      <td  id='model-row-${element.id}-item1'> ${element.item1}</td>
+      <td  id='model-row-${element.id}-operator1'> ${element.operator1}</td>
+      <td  id='model-row-${element.id}-item2'> ${element.item2}</td>
+      <td  id='model-row-${element.id}-operator2'> ${element.operator2}</td>
+      <td  id='model-row-${element.id}-item3'> ${element.item3}</td>
+      <td  id='model-row-${element.id}-operator3'> ${element.operator3}</td>
+      <td  id='model-row-${element.id}-item4'> ${element.item4}</td>
+      <td  id='model-row-${element.id}-operator4'> ${element.operator4}</td>
+      <td  id='model-row-${element.id}-item5'> ${element.item5}</td>
+
+
+
+      <td class="hidden-icon" style="border: None;" data-id='model-row-${element.id}' onclick="edit(${element.id})">
+      <i class="fa fa-edit" aria-hidden="true"></i> 
+      </td>
+      <td class="hidden-icon" style="border: None;" data-id='model-row-${element.id}' onclick="del(${element.id})">
+        <i class="fa fa-trash-o"  aria-hidden="true"></i> 
+      </td>
+      
+      </tr>`
+   });
+   
+
+ }
+function handlePagination(pages,current) {
+let val=document.getElementById("dropdown_view").value
+let category=val?val:"All"
+let val2=document.getElementById("dropdown_item").value
+let category2=val2?val2:"All"
+let val3=document.getElementById("dropdown_operator").value
+let category3=val3?val3:"All"
+if(pages < 20){
+    for(i=1;i<=pages;i++){
+    let opt = document.createElement("a");
+      opt.value = i; 
+      opt.innerHTML = i; 
+      if(i == current){
+        opt.className = "active"
+      }
+      opt.href=  `http://127.0.0.1:8000/aggragate_fiancials/?id=${i}&category=${category}&category2=${category2}&category3=${category3} `
+      // opt.href=  `http://127.0.0.1:8000/aggragate_fiancials/?id=${i} `
+
+      console.log(opt)
+      $('#pagination').append(opt); 
+  }
+  }else{
+    var arr =[];
+    current=current
+
+
+    let index2 = current-2;
+    arr.push(index2)
+
+    let index1= current-1;
+    arr.push(index1)
+
+    let index =current;
+    arr.push(index)
+
+    let nextIndex = current+1;
+
+    arr.push(nextIndex)
+
+    if(current == 1){
+
+    }else{
+      let opt = document.createElement("a");
+      opt.value = current-1; 
+      opt.innerHTML = `<i class="fa fa-angle-double-left"></i>`
+    
+      opt.href=  `http://127.0.0.1:8000/aggragate_fiancials/?id=${index1}&category=${category}&category2=${category2}&category3=${category3}`
+      // opt.href=  `http://127.0.0.1:8000/aggragate_fiancials/?id=${index1}`
+
+      $('#pagination').append(opt); 
+    }
+    
+    
+for (let i=0 ; i<arr.length ;i++){
+if(arr[i]>0){
+  if(arr[i] <= pages){
+  let opt = document.createElement("a");
+    opt.value = arr[i]; 
+      opt.innerHTML = arr[i]; 
+      if(arr[i] == current){
+        opt.className = "active"
+      }
+      opt.href= `http://127.0.0.1:8000/aggragate_fiancials/?id=${arr[i]}&category=${category}&category2=${category2}&category3=${category3}`
+      // opt.href= `http://127.0.0.1:8000/aggragate_fiancials/?id=${arr[i]}`
+
+      $('#pagination').append(opt); 
+}}
+
+}
+
+if(current ==pages){
+
+}else{
+let right = document.createElement("a");
+
+right.value = current-1; 
+right.innerHTML = `<i class="fa fa-angle-double-right"></i>`
+    
+right.href=  "http://127.0.0.1:8000/aggragate_fiancials/?id="+nextIndex
+      $('#pagination').append(right); 
+}
+
+
+}
+
+
+}
+
+
+function edit(el){
+let rowId='model-row-' +el
+  let viewTdId = 'model-row-'+el+'-view'
+  let nameTdId = 'model-row-'+el+'-name'
+  let item1TdId = 'model-row-'+el+'-item1'
+  let operator1TdId = 'model-row-'+el+'-operator1'
+  let item2TdId = 'model-row-'+el+'-item2'
+  let operator2TdId = 'model-row-'+el+'-operator2'
+  let item3TdId = 'model-row-'+el+'-item3'
+  let operator3TdId = 'model-row-'+el+'-operator3'
+  let item4TdId = 'model-row-'+el+'-item4'
+  let operator4TdId = 'model-row-'+el+'-operator4'
+let item5TdId='model-row-'+el+'-item5'
+
+let element = document.getElementById(rowId)
+
+  let viewVal=document.getElementById(viewTdId).innerText
+  let nameVal= document.getElementById(nameTdId).innerText
+  let item1Val= document.getElementById(item1TdId).innerText
+  let operator1Val= document.getElementById(operator1TdId).innerText
+  let item2Val= document.getElementById(item2TdId).innerText
+  let operator2Val= document.getElementById(operator2TdId).innerText
+  let item3Val= document.getElementById(item3TdId).innerText
+  let operator3Val= document.getElementById(operator3TdId).innerText
+  let item4Val= document.getElementById(item4TdId).innerText
+  let operator4Val= document.getElementById(operator4TdId).innerText
+  let item5Val= document.getElementById(item5TdId).innerText
+
+
+
+
+
+
+  element.innerHTML = `<tr id='${rowId}' >
+      <td  id='${viewTdId}'>
+        <input name="viewUpdate" value='${viewVal}' id="viewUpdateID"/>
+
+        </td>
+      <td  id='${nameTdId}'><input name="nameUpdate" value='${nameVal}' id="nameUpdateID"/></td>
+      <td  id='${item1TdId}'> <input name="item1Update" value='${item1Val}' id="item1UpdateID"/></td>
+      <td  id='${operator1TdId}'> <input name="operator1Update" value='${operator1Val}' id="operator1UpdateID"/></td>
+      <td  id='${item2TdId}'> <input name="item2Update" value='${item2Val}' id="item2UpdateID"/></td>
+      <td  id='${operator2TdId}'> <input name="operator2Update" value='${operator2Val}' id="operator2UpdateID"/></td>
+      <td  id='${item3TdId}'> <input name="item3Update" value='${item3Val}' id="item3UpdateID"/></td>
+      <td  id='${operator3TdId}'> <input name="operator3Update" value='${operator3Val}' id="operator3UpdateID"/></td>
+      <td  id='${item4TdId}'> <input name="item4Update" value='${item4Val}' id="item4UpdateID"/></td>
+      <td  id='${operator4TdId}'> <input name="operator4Update" value='${operator4Val}' id="operator4UpdateID"/></td>
+      <td  id='${item5TdId}'> <input name="item5Update" value='${item5Val}' id="item5UpdateID"/></td>
+
+
+      <td style="border: None;" onclick="save_row(${el})">            
+        <i class="fa fa-floppy-o" aria-hidden="true"></i> 
+      </td>
+      </tr>`
+
+}
+   async function handleApiCalls() {
+    document.getElementById("tableDiv").className = "hideTable";
+    document.getElementById("spinner").className = "spinner-border";
+
+
+var data=await getDropDown()
+const {
+  dropdown_view,
+  dropdown_item,
+  dropdown_operator
+}=data
+console.log("datas",dropdown_view,dropdown_item,dropdown_operator)
+const dropDownView = document.getElementById('dropdown_view')
+
+    for (let i = 0; i < dropdown_view.length; i++) {
+        let opt = document.createElement("option");
+        opt.value = dropdown_view[i]; //or i, depending on what you need to do
+        opt.innerHTML = dropdown_view[i]; 
+        $('#dropdown_view').append(opt); //Chuck it into the dom here if you want
+     } 
+
+     const dropdownitem=document.getElementById('dropdown_item')
+     for (let i = 0; i < dropdown_item.length; i++) {
+        let opt = document.createElement("option");
+        opt.value = dropdown_item[i]; //or i, depending on what you need to do
+        opt.innerHTML = dropdown_item[i];
+        // console.log("option",opt) 
+        $('#dropdown_item').append(opt); //Chuck it into the dom here if you want
+     } 
+     const dropdownOpr=document.getElementById('dropdown_operator')
+     for (let i = 0; i < dropdown_operator.length; i++) {
+        let opt = document.createElement("option");
+        opt.value = dropdown_operator[i]; //or i, depending on what you need to do
+        opt.innerHTML = dropdown_operator[i];
+        // console.log("option",opt) 
+        $('#dropdown_operator').append(opt); //Chuck it into the dom here if you want
+     } 
+let url=window.location.search
+console.log("htmlurl",url)
+let catogery;
+let catogery2;
+let catogery3;
+if(url){
+  let cat=url.substring(url.lastIndexOf("category=")).split("=")[1].split("&")[0]
+catogery=cat;
+  
+     let cat2=url.substring(url.lastIndexOf("category2=")).split("=")[1].split("&")[0]
+catogery2=cat2
+catogery3=url.substring(url.lastIndexOf("category3=")).split("=")[1]
+
+ console.log("hcat",catogery)
+ console.log("hcat2",catogery2)
+ console.log("hcat3",catogery3)
+
+}
+if(catogery){
+  let opt=document.getElementById("dropdown_view")
+  opt.value=catogery
+}
+     if(catogery2){
+       let opt=document.getElementById("dropdown_item")
+       opt.value=catogery2
+     }  
+     if(catogery3){
+       let opt =document.getElementById("dropdown_operator")
+       opt.value=catogery3
+     }
+
+
+
+
+
+
+var {get_data,page_data,current_page} = await getModel();
+const paginationRow=document.getElementById("pagination")
+    // handlePagination(page_data,current_page)
+     const tableRow =document.getElementById('model-table')
+    tableRow.innerHTML =``
+    handlePagination(page_data,current_page)
+    console.log("getData", get_data)
+    get_data.forEach(element => {
+     tableRow.innerHTML+= `<tr id='model-row-${element.id}'>
+      <td  id='model-row-${element.id}-view'> ${element.view}</td>
+      <td  id='model-row-${element.id}-name'>${element.name}</td>
+      <td  id='model-row-${element.id}-item1'> ${element.item1}</td>
+      <td  id='model-row-${element.id}-operator1'> ${element.operator1}</td>
+      <td  id='model-row-${element.id}-item2'> ${element.item2}</td>
+      <td  id='model-row-${element.id}-operator2'> ${element.operator2}</td>
+      <td  id='model-row-${element.id}-item3'> ${element.item3}</td>
+      <td  id='model-row-${element.id}-operator3'> ${element.operator3}</td>
+      <td  id='model-row-${element.id}-item4'> ${element.item4}</td>
+      <td  id='model-row-${element.id}-operator4'> ${element.operator4}</td>
+      <td  id='model-row-${element.id}-item5'> ${element.item5}</td>
+
+
+      <td class="hidden-icon" style="border: None;" data-id='model-row-${element.id}' onclick="edit(${element.id})">
+      <i class="fa fa-edit" aria-hidden="true"></i> 
+      </td>
+      <td class="hidden-icon" style="border: None;" data-id='model-row-${element.id}' onclick="del(${element.id})">
+        <i class="fa fa-trash-o"  aria-hidden="true"></i> 
+      </td>
+      
+      </tr>`
+   });
+  
+     document.getElementById("tableDiv").className = "";
+     document.getElementById("spinner").className = "hideTable";
+
+
+   }
+ </script>
+  
+</head>
+<style>
+.pagination {
+    display: flex;
+    width: 100%;
+    flex-direction: row;
+    justify-content: end;
+    padding-right: 130px;
+}
+
+
+.pagination a {
+  color: black;
+  float: left;
+  padding: 8px 16px;
+  text-decoration: none;
+  margin-right: 10px;
+}
+
+.pagination a.active {
+  background-color: gray;
+  color: white;
+  border-radius: 5px;
+}
+
+.pagination a:hover:not(.active) {
+  background-color: #ddd;
+  border-radius: 5px;
+}
+
+ th {
+  border: 1px solid black;
+}
+th{
+    background: grey;
+    color:white;
+}
+td{
+
+    background: white;
+    color:black;
+
+}
+
+td > input {
+    border: 1px solid transparent;
+    background-color: #f1f1f1;
+    font-size: 12px;
+    padding: 0px;
+    width: 100%;
+
+
+}
+#model_table  {
+    width: 85%;
+    margin-left: 7%;
+  margin-top: 5%;
+}
+.editrow{
+    width: 100%;
+}
+
+.hidden-icon{
+  width: 20px;
+}
+.tableView{
+  padding: 10px 70px;
+}
+
+.hideTable{
+  display: none;
+}
+
+.spinnerDiv{
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+
+
+</style>
+<body onload="handleApiCalls()">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item active">
+        <a class="nav-link" href="{% url 'investing_styles' %}"> Context </a>
+      </li>
+      <li class="nav-item ">
+        <a class="nav-link" href="{% url 'index' %}"> Data Acquisition </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link active" href="{% url 'dp_investing_styles' %}"> Data Processing</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link "  href="{% url 'data_analysis' %}"> Data Analysis</a>
+      </li>
+
+  
+
+    </ul>
+  </div>
+</nav>
+
+
+
+
+
+<div class="pl-4 alert alert-secondary">
+  <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'dp_investing_styles' %}"> Investing Style </span>
+  <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'model_dp' %}" class="ml-3"> Analysis Model </a></span>
+  <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'strategies' %}" class="ml-3"> Screen Model </span>
+  <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'ranges_dp' %}" class="ml-3"> Ranges  </a></span>
+  <span class="title" id="reg_title"> <a style="color: #383d41; font-weight:bold;" href="{% url 'aggragate_fiancials' %}" class="ml-3"> Aggregate Financials  </a></span>
+  <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'create_metrics' %}" class="ml-3"> Create Metrics </a></span>
+  <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'advancedRatios' %}" class="ml-3"> Advanced Metrics  </a></span>
+</div>
+<div class="spinnerDiv">
+  <div class="hideTable" role="status" id="spinner">
+    <span class="visually-hidden"></span>
+  </div>
+</div>
+
+<div id="tableDiv" class="" >
+
+   <select id="dropdown_view" name="drop" style="display: none" onchange="val()">
+    <option value="null">All</option>
+  </select> 
+
+
+  <select id="dropdown_item" name="drop" style="display: none"onchange="val()">
+    <option value="null">All</option>
+  </select>
+
+<select id="dropdown_operator" name="drop" style="display: none;" onchange="val()">
+    <option value="null">All</option>
+  </select> 
+
+<div class="tableView">
+  <table class="table">
+    <div style="text-align: right; padding-right: 72px; margin-bottom: 5px;">  
+      <button class="btn-dark" id="addbtn" onclick="add_model()">
+        <i class="fa fa-plus-circle"></i>
+        Add new Model
+      </button>
+    </div>
+    <thead>
+      <tr>
+        <th scope="col">view</th>
+        <th scope="col">name</th>
+
+        <th scope="col">Item1</th>
+        <th scope="col">Operator</th>
+
+        <th scope="col">Item2</th>
+        <th scope="col">Operator</th>
+
+        <th scope="col">Item3</th>
+        <th scope="col">Operator</th>
+
+        <th scope="col">Item4</th>
+        <th scope="col">Operator</th>
+
+        <th scope="col">Item5</th>
+
+      </tr>
+    </thead>
+    <tbody id="model-table">
+      <tr>
+      </tr>
+      
+    </tbody>
+  </table>
+</div>
+<div class="pagination" id="pagination">
+</div>
+</div>
+
+</body>
+</html>

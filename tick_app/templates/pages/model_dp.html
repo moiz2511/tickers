@@ -1,0 +1,467 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title> Tickers App</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
+  <link href="{% static 'files/styles.css' %}" rel="stylesheet">
+  <script src="{% static 'files/model_dp.js' %}"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/bbbootstrap/libraries@main/choices.min.css">
+  <script src="https://cdn.jsdelivr.net/gh/bbbootstrap/libraries@main/choices.min.js"></script>
+  <script>
+
+    async function val() {
+      d = document.getElementById("dropdown_model").value
+      d2 = document.getElementById("dropdown_category").value
+      window.location.href = `http://127.0.0.1:8000/model_dp/?id=1&category=${d}&category2=${d2}`
+console.log("=======",d,d2);
+      var { get_data,  page_data, current_page } = await getModel();
+      const paginationRow = document.getElementById('pagination')
+      paginationRow.innerHTML = ``
+      handlePagination(page_data, current_page)
+
+      const tableRow = document.getElementById('model-table')
+      tableRow.innerHTML = ``
+      get_data.forEach(element => {
+        tableRow.innerHTML += `<tr id='model-row-${element.id}'>
+      <td id='model-row-${element.id}-model'> ${element.model}</td>
+      <td id='model-row-${element.id}-category'>${element.category}</td>
+      <td id='model-row-${element.id}-question'> ${element.question}</td>
+      <td id='model-row-${element.id}-metric'> ${element.metric}</td>
+      <td id='model-row-${element.id}-tool'> ${element.tool}</td>
+      <td id='model-row-${element.id}-range'> ${element.range}</td>
+      <td id='model-row-${element.id}-model_from'> ${element.model_from}</td>
+      <td id='model-row-${element.id}-model_to'> ${element.model_to}</td>
+      <td id='model-row-${element.id}-display'> ${element.display}</td>
+
+      <td class="hidden-icon" style="border: None;" data-id='model-row-${element.id}' onclick="edit(${element.id})">
+      <i class="fa fa-edit" aria-hidden="true"></i> 
+      </td>
+      <td class="hidden-icon" style="border: None;" data-id='model-row-${element.id}' onclick="del(${element.id})">
+        <i class="fa fa-trash-o"  aria-hidden="true"></i> 
+      </td>
+      
+      </tr>`
+      });
+
+    }
+    function handlePagination(pages, current) {
+
+      let val = document.getElementById("dropdown_model").value
+      let category = val ? val : "All"
+      let val2=document.getElementById("dropdown_category").value
+      let category2=val2?val2:"All"
+      if (pages < 20) {
+        for (i = 1; i <= pages; i++) {
+          let opt = document.createElement("a");
+          opt.value = i;
+         opt.innerHTML=i;
+          if (i == current) {
+            opt.className = "active"
+          }
+          function val() {
+            d = document.getElementById("dropdown_model").value
+            console.log("aadarsh", d)
+            d2=document.getElementById("dropdown_category").value
+         console.log(d2)
+          }
+          opt.href = `http://127.0.0.1:8000/model_dp/?id=${i}&category=${category}&category2=${category2}`
+          console.log(opt)
+          $('#pagination').append(opt);
+        }
+      } else {
+        var arr = [];
+        current = current
+
+
+        let index2 = current - 2;
+        arr.push(index2)
+
+        let index1 = current - 1;
+        arr.push(index1)
+
+        let index = current;
+        arr.push(index)
+
+        let nextIndex = current + 1;
+
+        arr.push(nextIndex)
+
+        if (current == 1) {
+
+        } else {
+          let opt = document.createElement("a");
+          opt.value = current - 1;
+          opt.innerHTML = `<i class="fa fa-angle-double-left"></i>`
+
+          opt.href = `http://127.0.0.1:8000/model_dp/?id=${index1}&category=${category}&category2=${category2}`
+          $('#pagination').append(opt);
+        }
+
+
+        for (let i = 0; i < arr.length; i++) {
+          if (arr[i] > 0) {
+            if (arr[i] <= pages) {
+              let opt = document.createElement("a");
+              opt.value = arr[i];
+              opt.innerHTML = arr[i];
+              if (arr[i] == current) {
+                opt.className = "active"
+              }
+              opt.href = `http://127.0.0.1:8000/model_dp/?id=${arr[i]}&category=${category}&category2=${category2}`
+              $('#pagination').append(opt);
+            }
+          }
+
+        }
+
+        if (current == pages) {
+
+        } else {
+          let right = document.createElement("a");
+
+          right.value = current - 1;
+          right.innerHTML = `<i class="fa fa-angle-double-right"></i>`
+
+          right.href = "http://127.0.0.1:8000/model_dp/?id=" + nextIndex
+          $('#pagination').append(right);
+        }
+
+
+      }
+
+
+    }
+
+
+    function edit(el) {
+
+      let rowId = 'model-row-' + el
+      let modelTdId = 'model-row-' + el + '-model'
+      let categoryTdId = 'model-row-' + el + '-category'
+      let questionTdId = 'model-row-' + el + '-question'
+      let metricTdId = 'model-row-' + el + '-metric'
+      let toolTdId = 'model-row-' + el + '-tool'
+      let rangeTdId = 'model-row-' + el + '-range'
+      let fromTdId = 'model-row-' + el + '-model_from'
+      let toTdId = 'model-row-' + el + '-model_to'
+      let displayTdId = 'model-row-' + el + '-display'
+
+
+
+      let element = document.getElementById(rowId)
+      let modelVal = document.getElementById(modelTdId).innerText
+      let categoryVal = document.getElementById(categoryTdId).innerText
+      let questionVal = document.getElementById(questionTdId).innerText
+      let metricVal = document.getElementById(metricTdId).innerText
+      let toolVal = document.getElementById(toolTdId).innerText
+      let rangeVal = document.getElementById(rangeTdId).innerText
+      let fromVal = document.getElementById(fromTdId).innerText
+      let toVal = document.getElementById(toTdId).innerText
+      let displayVal = document.getElementById(displayTdId).innerText
+
+
+
+
+
+
+      element.innerHTML = `<tr id='${rowId}' >
+      <td  id='${modelTdId}'><input name="modelUpdate" value='${modelVal}' id="modelUpdateID"/></td>
+      <td  id='${categoryTdId}'><input name="categoryUpdate" value='${categoryVal}' id="categoryUpdateID"/></td>
+      <td  id='${questionTdId}'> <input name="questionUpdate" value='${questionVal}' id="questionUpdateID"/></td>
+      <td  id='${metricTdId}'> <input name="metricUpdate" value='${metricVal}' id="metricUpdateID"/></td>
+      <td  id='${toolTdId}'> <input name="toolUpdate" value='${toolVal}' id="toolUpdateID"/></td>
+      <td  id='${rangeTdId}'> <input name="rangeUpdate" value='${rangeVal}' id="rangeUpdateID"/></td>
+      <td  id='${fromTdId}'> <input name="fromUpdate" value='${fromVal}' id="fromUpdateID"/></td>
+      <td  id='${toTdId}'> <input name="toUpdate" value='${toVal}' id="toUpdateID"/></td>
+      <td  id='${displayTdId}'> <input name="displayUpdate" value='${displayVal}' id="displayUpdateID"/></td>
+
+      <td style="border: None;" onclick="save_row(${el})">            
+        <i class="fa fa-floppy-o" aria-hidden="true"></i> 
+      </td>
+      </tr>`
+
+    }
+    async function handleApiCalls() {
+      document.getElementById("tableDiv").className = "hideTable";
+      document.getElementById("spinner").className = "spinner-border";
+      var data = await getDropDown();
+      const {
+        dropdown_model,
+        dropdown_category
+      } = data
+      console.log("dtass",dropdown_model,
+        dropdown_category)
+
+      const dropDownVal = document.getElementById('dropdown_model')
+
+      for (let i = 0; i < dropdown_model.length; i++) {
+        let opt = document.createElement("option");
+        opt.value = dropdown_model[i]; //or i, depending on what you need to do
+        opt.innerHTML = dropdown_model[i];
+        $('#dropdown_model').append(opt); //Chuck it into the dom here if you want
+      }
+
+      const dropdown_categoryEle = document.getElementById('dropdown_category')
+      for (let i = 0; i < dropdown_category.length; i++) {
+        let opt = document.createElement("option");
+        opt.value = dropdown_category[i]; //or i, depending on what you need to do
+        opt.innerHTML = dropdown_category[i];
+        $('#dropdown_category').append(opt); //Chuck it into the dom here if you want
+      }
+      let url = window.location.search
+      console.log("htmlurl", url)
+      let catogery;
+      let catogery2;
+      if(url) {
+        catogery = url.substring(url.lastIndexOf("category=")).split("=")[1].split("&")[0]
+console.log("htmlcat1",catogery);
+        catogery2 = url.substring(url.lastIndexOf("category2=")).split("=")[1].replaceAll("%20"," ")
+        console.log("htmlcat12",catogery2);
+
+      }
+
+      if(catogery && catogery2) {
+        let opt = document.getElementById("dropdown_model")
+
+        opt.value = catogery
+        console.log("DOCUMENT GETDROPDOWN METRIC,", opt.value)
+
+      }
+      if(catogery2) {
+        let opt = document.getElementById("dropdown_category")
+        opt.value = catogery2
+        console.log("DOCUMENT GETDROPDOWN cate,", opt.value)
+
+
+      }
+
+      var { get_data, page_data, current_page } = await getModel();
+      const paginationRow = document.getElementById('pagination')
+
+      const tableRow = document.getElementById('model-table')
+      tableRow.innerHTML = ``
+      handlePagination(page_data, current_page)
+console.log("getttt",get_data)
+      get_data.forEach(element => {
+        tableRow.innerHTML += `<tr id='model-row-${element.id}'>
+      <td  id='model-row-${element.id}-model'> ${element.model}</td>
+      <td  id='model-row-${element.id}-category'>${element.category}</td>
+      <td  id='model-row-${element.id}-question'> ${element.question}</td>
+      <td  id='model-row-${element.id}-metric'> ${element.metric}</td>
+      <td  id='model-row-${element.id}-tool'> ${element.tool}</td>
+      <td  id='model-row-${element.id}-range'> ${element.range}</td>
+      <td  id='model-row-${element.id}-model_from'> ${element.model_from}</td>
+      <td  id='model-row-${element.id}-model_to'> ${element.model_to}</td>
+      <td  id='model-row-${element.id}-display'> ${element.display}</td>
+
+      <td class="hidden-icon" style="border: None;" data-id='model-row-${element.id}' onclick="edit(${element.id})">
+      <i class="fa fa-edit" aria-hidden="true"></i> 
+      </td>
+      <td class="hidden-icon" style="border: None;" data-id='model-row-${element.id}' onclick="del(${element.id})">
+        <i class="fa fa-trash-o"  aria-hidden="true"></i> 
+      </td>
+      
+      </tr>`
+      });
+
+
+
+      document.getElementById("tableDiv").className = "";
+      document.getElementById("spinner").className = "hideTable";
+
+
+    }
+  </script>
+
+</head>
+<style>
+  .error{
+    background-color: red;
+    color:white;
+  }
+  .pagination {
+    display: flex;
+    width: 100%;
+    flex-direction: row;
+    justify-content: end;
+    padding-right: 130px;
+  }
+
+
+  .pagination a {
+    color: black;
+    float: left;
+    padding: 8px 16px;
+    text-decoration: none;
+    margin-right: 10px;
+  }
+
+  .pagination a.active {
+    background-color: gray;
+    color: white;
+    border-radius: 5px;
+  }
+
+  .pagination a:hover:not(.active) {
+    background-color: #ddd;
+    border-radius: 5px;
+  }
+
+  th {
+    border: 1px solid black;
+  }
+
+  th {
+    background: grey;
+    color: white;
+  }
+
+  td {
+
+    background: white;
+    color: black;
+
+  }
+
+  td>input {
+    border: 1px solid transparent;
+    background-color: #f1f1f1;
+    font-size: 12px;
+    padding: 0px;
+    width: 100%;
+
+
+  }
+
+  #model_table {
+    width: 85%;
+    margin-left: 7%;
+    margin-top: 5%;
+  }
+
+  .editrow {
+    width: 100%;
+  }
+
+  .hidden-icon {
+    width: 20px;
+  }
+
+  .tableView {
+    padding: 10px 70px;
+  }
+
+  .hideTable {
+    display: none;
+  }
+
+  .spinnerDiv {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+</style>
+
+<body onload='handleApiCalls()'>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'investing_styles' %}"> Context </a>
+      </li>
+      <li class="nav-item ">
+        <a class="nav-link" href="{% url 'index' %}"> Data Acquisition </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link active" href="{% url 'dp_investing_styles' %}"> Data Processing</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link " href="{% url 'data_analysis' %}"> Data Analysis</a>
+      </li>
+
+
+
+    </ul>
+    </div>
+  </nav>
+
+
+
+
+
+  <div class="pl-4 alert alert-secondary">
+    <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'dp_investing_styles' %}"> Investing Style </span>
+    <span class="title" id="reg_title"> <a style="color: #383d41; font-weight:bold;" href="{% url 'model_dp' %}" class="ml-3"> Analysis Model </a></span>
+    <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'strategies' %}" class="ml-3"> Screen Model </span>
+    <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'ranges_dp' %}" class="ml-3"> Ranges  </a></span>
+    <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'aggragate_fiancials' %}" class="ml-3"> Aggregate Financials  </a></span>
+    <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'create_metrics' %}" class="ml-3"> Create Metrics </a></span>
+    <span class="title" id="reg_title"> <a style="color: #383d41;" href="{% url 'advancedRatios' %}" class="ml-3"> Advanced Metrics  </a></span>      
+  </div>
+  <div class="spinnerDiv">
+    <div class="hideTable" role="status" id="spinner">
+      <span class="visually-hidden"></span>
+    </div>
+  </div>
+
+  <div id="tableDiv" class="">
+
+    <label for="drop" style="padding-left:  70px;">Model</label>
+
+    <select id="dropdown_model" name="drop" onchange="val()">
+      <option value="null">All</option>
+    </select>
+
+    <label for="drop" style="padding-left:10px;">Category</label>
+
+    <select id="dropdown_category" name="drop" onchange="val()">
+      <option value="null">All</option>
+    </select>
+    <div class="tableView">
+      <table class="table">
+        <div style="text-align: right; padding-right: 72px; margin-bottom: 5px;">
+          <button class="btn-dark" id="addbtn" onclick="add_model()">
+            <i class="fa fa-plus-circle"></i> Add New Model
+          </button>
+        </div>
+        <thead>
+          <tr>
+            <th scope="col">model</th>
+            <th scope="col">category</th>
+            <th scope="col">question</th>
+            <th scope="col">metric</th>
+            <th scope="col">tool</th>
+            <th scope="col">range</th>
+            <th scope="col">from</th>
+            <th scope='col'>to</th>
+            <th scope='col'>display</th>
+
+          </tr>
+        </thead>
+        <tbody id="model-table">
+          <tr>
+          </tr>
+
+        </tbody>
+      </table>
+    </div>
+
+
+    <div class="pagination" id="pagination">
+    </div>
+  </div>
+
+</body>
+
+</html>

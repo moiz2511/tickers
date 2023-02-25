@@ -1,0 +1,137 @@
+{% extends "pages/index.html" %}
+{% load static %}
+{% block body %}
+
+
+
+<button type="button" class="btn btn-light ml-5" style="border: black solid 1px;" data-toggle="modal" data-target="#exampleModal">
+    Aggregrate codes list
+</button>
+
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="modal-title" id="exampleModalLabel"> Aggregrate codes list </h6>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <table class="ml-3">
+          <tr>
+            <th>
+              Aggregate_code
+            </th>
+            <th>
+              item
+            </th>
+          </tr>
+          
+            {% for i in code %}
+            <tr>
+            <td> {{i.aggregate_code}} </td>
+            <td> {{i.item}} </td>
+
+          </tr>
+
+            {% endfor %}
+          
+
+
+
+
+
+
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<br>
+<br>
+
+
+<h5 class="ml-3"> Data Uploaded </h5>
+
+
+<form action="{% url 'upload_results' %}"  method="POST" >
+<table class='upload table ml-4'>
+<tbody>
+<tr>
+{% for column in columns %}
+
+
+<th> {{ column }}</th>
+
+{% endfor %}
+</tr>
+
+{% for i in page_obj %}
+<tr id="hide-row" >
+    {% for k in i|slice:"1:" %}
+    <td>
+{{ k }} 
+</td>
+{% endfor %}
+<td class="hide-icon" style="border: None;" onclick="edit_file(this)">
+    <i class="fa fa-edit" aria-hidden="true"></i>  </span>
+</td>
+
+</tr>
+
+<tr class="edit-field">
+{% for k in i|slice:"1:" %}
+<td>
+ 
+    <textarea type="text" > {{ k }} </textarea>
+</td>
+{% endfor %}
+<td class="save-icon" style="border: None;" data-id="{{i}}" onclick="save_data(this)">
+  <button class="btn-dark" type="submit" >   <i class="fa fa-floppy-o" type='submit' aria-hidden="true"></i> </button> </span>
+  
+</tr>
+
+
+
+{% endfor %}
+</tbody>
+</table>
+<textarea id="txt-area" name="uploadarea" style="display: none;" rows="4" cols="50">  </textarea>
+</form>
+
+
+
+
+
+
+<br>
+
+<nav aria-label="Page navigation ">
+    <ul class="pagination justify-content-center">
+      <li class="page-item">
+        {% if page_obj.has_previous %}
+        <a class="page-link" href="?page=1" tabindex="-1">First</a>
+        {% endif %}
+        {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">{{page_obj.previous_page_number}}</a></li>
+        {% endif %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.number }}">{{ page_obj.number }}</a></li>
+      {% if page_obj.has_next %}
+      <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number  }}">{{page_obj.next_page_number}}</a></li>
+      {% endif %}
+
+      <li class="page-item">
+        {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a></li>
+        {% endif %}
+
+      </li>
+    </ul>
+  </nav>
+
+  
+  
+{% endblock %}
