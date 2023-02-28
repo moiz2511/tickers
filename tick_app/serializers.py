@@ -2064,6 +2064,7 @@ class GetScreenerCompaniesByMetricFiltersSerializer(serializers.Serializer):
     # range = serializers.CharField(
     #     write_only=True, max_length=128, allow_null=True)
     companies_data = serializers.ListField(read_only=True)
+    companies_all_data = serializers.ListField(read_only=True)
     pages_details = serializers.IntegerField(read_only=True)
     current_page = serializers.IntegerField(read_only=True)
     
@@ -2154,7 +2155,7 @@ class GetScreenerCompaniesByMetricFiltersSerializer(serializers.Serializer):
                 categorized_data[category] = []
             categorized_data[category].append(item)
 
-        # print("vategorized",categorized_data)
+        print("vategorized",categorized_data)
         newResult={}
         for category in categorized_data:
             print(category)
@@ -2237,45 +2238,83 @@ class GetScreenerCompaniesByMetricFiltersSerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                     "Error on Getting Companies by metrics")
 
-       
-        # for metric in metricTableDict.keys():
-        #     print(result)
-        #     cat=""
-        #     for d in result:
-        #         if d['metric'] == metric:
-        #             cat=d['category']
-        #             break
-        #     print("$#############$$$$$$$$$$$$$$$$$$$%%%%%%%%%%%##########################3")
-        #     newQuery = """SELECT * FROM (SELECT A.symbol, A.company_name, A.exchange, A.sector, A.industry, A.country,
-        #    avgMetricFilters FROM tick_app_company as A """
-        #     newQuery=newQuery + " "+resultDict[metric]
-        #     # print(newQuery)
-        #     newQuery += " "+ internalWhereCondition[metric].strip(" ").lstrip("and") + " group by A.company_name) as results where metricWhereCondition;"
-        #     newQuery = newQuery.replace("metricWhereCondition", whereMetricsConditionDict[metric].strip().lstrip("and"))
-        #     # print(newQuery)
-        #     print(avgMetricFilters[metric])
-        #     if(advCondition is not None and advCondition.strip() != ""):
-        #         newQuery = newQuery.replace("avgMetricFilters", avgMetricFilters[metric] + advCondition.lstrip(","))
-        #     else:
-        #         newQuery = newQuery.replace("avgMetricFilters", avgMetricFilters[metric].rstrip(","))
-        #     print(newQuery)
-        #     cursor.execute(newQuery)
-        #     fields = [field_md[0] for field_md in cursor.description]
-        #     newResult[cat] = [dict(zip(fields, row)) for row in cursor.fetchall()]
-        #     print("######second quert result")
-        #     print(newResult[cat])
-        #     print("$#############$$$$$$$$$$$$$$$$$$$%%%%%%%%%%%##########################3")
-
-
-        # except Exception as inst:
-        #     print(inst)
-        #     raise serializers.ValidationError(
-        #         "Error on Getting Companies by metrics")
         newResult_json = JsonResponse(newResult)
+        
+        
+        resultDict = {}
+        internalWhereCondition = ""
+        avgMetricFilters = ""
+        metricTableDict = {}
+        advCondition = ""
+        # advMetricsCount = 0
+        advMetricTable = {}
+        advMetricsList = []
+        newQuery = """SELECT * FROM (SELECT A.symbol, A.company_name, A.exchange, A.sector, A.industry, A.country,
+           avgMetricFilters FROM tick_app_company as A """
+        for metricData in result:
+            metric = metricData['metric']
+            dataSource = metricData['source']
+            if dataSource in resultDict.keys():
+                resultDict[dataSource] = resultDict[dataSource] + ""
+                metricTableDict[metric] = dataSource
+            else:
+                metricTableDict[metric] = dataSource
+                resultDict[dataSource] = " inner join " + dataSource + " as " + dataSource + " on A.symbol=" + dataSource + ".symbol "
+                internalWhereCondition += " and year("+ dataSource + ".date) >= year(sysdate() - interval '" + str(yearPeriod) +"' year)"
+        for metricTab in resultDict.values():
+            newQuery += metricTab
+        newQuery += " where " + internalWhereCondition.strip(" ").lstrip("and") + " group by A.company_name) as results where metricWhereCondition;"
+        whereMetricsCondition = ""
+        current_page = data.get("page", None)
+        n = 15
+        try:
+            for object in data.get("filters"):
+                metric_filter = str(object.get("metric", None))
+                operator_filter = object.get("operator", None)
+                range_filter = object.get("value", None)
+                if metric_filter not in customMetricsList:
+                    avgMetricFilters += "avg(" + \
+                        metricTableDict[metric_filter] + "." + metric_filter+") as " + metric_filter + ","
+                if(str(operator_filter).strip().lower() == "greaterthan"):
+                    whereMetricsCondition += " and " + \
+                        metric_filter + " > " + \
+                        "'" + str(range_filter) + "'"
+                elif(str(operator_filter).strip().lower() == "lessthan"):
+                    whereMetricsCondition += " and " + \
+                        metric_filter + " < " + \
+                        "'" + str(range_filter) + "'"
+                elif(str(operator_filter).strip().lower() == "greaterthanorequal"):
+                    whereMetricsCondition += " and " + \
+                        metric_filter + " >= " + \
+                        "'" + str(range_filter) + "'"
+                elif(str(operator_filter).strip().lower() == "lessthanorequal"):
+                    whereMetricsCondition += " and " + \
+                        metric_filter + " <= " + \
+                        "'" + str(range_filter) + "'"
+            whereMetricsCondition = whereMetricsCondition.strip().lstrip("and") + " and company_name in ("+ ', '.join(['"{}"'.format(value) for value in companies]) +")"
+            newQuery = newQuery.replace("metricWhereCondition", whereMetricsCondition.strip().lstrip("and"))
+            if(advCondition is not None and advCondition.strip() != ""):
+                newQuery = newQuery.replace("avgMetricFilters", avgMetricFilters + advCondition.lstrip(","))
+            else:
+                newQuery = newQuery.replace("avgMetricFilters", avgMetricFilters.rstrip(","))
+            print("######## QUERY BEING EXECUTED #######")
+            print(newQuery)
+            print("######################################")
+            cursor = connection.cursor()
+            cursor.execute(newQuery)
+            fields = [field_md[0] for field_md in cursor.description]
+            result = [dict(zip(fields, row)) for row in cursor.fetchall()]
+        except Exception as inst:
+            print(inst)
+            raise serializers.ValidationError(
+                "Error on Getting Companies by metrics  again")
+        
+        # newResult_again = JsonResponse(result)
         print(newResult)
         # print(newResult)
         return {
             "companies_data": newResult_json,
+            "companies_all_data": result,
             "pages_details": int(math.ceil(len(result)/n)),
             "current_page": current_page,
         }

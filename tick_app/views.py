@@ -2734,13 +2734,13 @@ class GetCompaniesByFilters(APIView):
             # country = country.split(",")
             exchange = request.data.get("exchange")
             # exchange = exchange.split(",")
-            city = request.data.get("city")
+            # city = request.data.get("city")
             # city = city.split(",")
             sector = request.data.get("sector")
             # sector = sector.split(",")
             industry = request.data.get("industry")
             # industry = industry.split(",")
-            data = Company.objects.filter(country__in=country, exchange__in=exchange, city__in=city, sector__in=sector, industry__in=industry).values()
+            data = Company.objects.filter(country__in=country, exchange__in=exchange, sector__in=sector, industry__in=industry).values()
         except Exception as e:
             raise(e)
         return Response(
@@ -2813,6 +2813,7 @@ class GetScreenerCompaniesByMetricsFilterView(APIView):
             {
                 "success": "True",
                 "companies_data": serializer.data["companies_data"],
+                "companies_all_data": serializer.data["companies_all_data"],
                 "page_data": serializer.data["pages_details"],
                 "current_page": serializer.data["current_page"],
             },
