@@ -18,6 +18,132 @@ unitSymbolDict = {
     "monetary": "ccy"
 }
 
+
+def keymetrics_func1(f_company, f_exchange, f_table, category, frequency, quarter, fromYear, toYear):
+    # SECRETS = {}
+    # try:
+    #     SECRETS = GetSecretProperties.getSecretsObj()
+    # except Exception as e:
+    #     print(e)
+    return_list=[]
+    date_range=list(range(int(fromYear),int(toYear)+1))
+    date_range=[str(x) for x in date_range]
+    # model_select=model_dict[f_table]
+    _symbol=Company.objects.filter(company_name=f_company, exchange=f_exchange)
+    symbol_=_symbol[0].symbol
+    print("symbol",symbol_)
+    # fields_list=[f.name for f in model_select._meta.get_fields()]
+    # print(fields_list)
+    # data_ = model_select.objects.filter(symbol=symbol_)[0]
+    # data_ = callFinPrepApi(symbol_, SECRETS['FINANCIALPREP_API_KEY'], f_table)[0]
+    metrics = []
+    # if f_table == "Ratios":
+    #     metrics=MetricsList.objects.filter(source="tick_app_ratios", category=category).values("metric", "unit")
+    # else:
+    #     metrics=MetricsList.objects.filter(source="tick_app_keymetrics", category=category).values("metric", "unit")
+    if f_table == "Ratios":
+        metrics=MetricsList.objects.filter(source="tick_app_ratios", category=category).values("metric", "unit","measure","category","description")
+    else:
+        metrics=MetricsList.objects.filter(source="tick_app_keymetrics", category=category).values("metric", "unit","measure","category","description")
+    metricsList = [metric['metric'] for metric in metrics]
+    metricsList = [metric['metric'] for metric in metrics]
+    metricsUnits = {}
+    metricsUnit = {}
+    # for metric in metrics:
+    #     metricsUnit[metric['metric']]=metric['unit']
+    
+    for metric in metrics:
+        metricDetail={'unit':metric['unit'],'measure':metric['measure'],'category':metric['category'],'description':metric['description']}
+        metricsUnits[metric['metric']]=metric['unit']
+        metricsUnit[metric['metric']]=metricDetail
+    print(metricsUnit)
+    currentYear = date.today().year
+    url = "https://financialmodelingprep.com/api"
+    ttmURL = url
+    limit = ""
+    queryString = ""
+    try:
+        if frequency == "Quarter":
+            maxYear = (currentYear + 2)-int(fromYear)
+            limit = str((maxYear * 4))
+            queryString = "?period=quarter&limit=" + limit + "&"
+        else:
+            limit = str(((currentYear+1)-int(fromYear)))
+            queryString = "?limit=" + limit + "&"
+    except Exception as e:
+        print(e)
+    if f_table == "Ratios":
+        url = url + "/v3/ratios/"+symbol_ + queryString
+        ttmURL = ttmURL + "/v3/ratios-ttm/"+symbol_+"?"
+        ratiosTTMRespose = ExecuteAPI(ttmURL, date_range, False)
+        # ratiosTTMResp, ratiosTTMRespFields = ParseDataFromAPIResponse(metricsTTM, ratiosTTMRespose, frequency, date_range, True, quarter)
+        ratiosRespose = ExecuteAPI(url, date_range, True)
+        ratiosResp, ratiosRespFields = ParseDataFromAPIResponse(metricsList, ratiosRespose, frequency, date_range, False, quarter, metricsUnits, symbol_)
+        finalRatiosResp = []
+        for ratioData in ratiosResp:
+            try:
+                unit = metricsUnit[ratioData['metric']]
+                ratioData["ttm"] = getValueParsedByUnit(ratiosTTMRespose[0][ratioData['metric']+"TTM"], unit)
+            except Exception as e:
+                print(e)
+                ratioData["ttm"] = getValueParsedByUnit(0, unit)
+            ratioData["unit"] = unit
+            # if unit is not None and unit != "":
+            #     if unitSymbolDict[unit] is not None and unitSymbolDict[unit] != "":
+            #         unitSymbol = unitSymbolDict[unit]
+            #         if unitSymbol == "ccy":
+            #             data = getCompanyProfile(symbol_)
+            #             unitSymbol = data[0]['currency']
+            #         ratioData['field'] = ratioData['metric'] + " ("+unitSymbol+")"
+            finalRatiosResp.append(ratioData)
+        objectResponse = {}
+        objectResponse['ratiosResp'] = finalRatiosResp
+        # objectResponse['ratiosTTMResp'] = ratiosTTMResp
+        objectResponse['ratiosRespFields'] = ratiosRespFields
+        objectResponse['metricsUnit'] = metricsUnit
+        # objectResponse['ratiosTTMRespFields'] = ratiosTTMRespFields
+        return_list.append(objectResponse)
+    else:
+        url = url + "/v3/key-metrics/"+symbol_ + queryString
+        ttmURL = ttmURL + "/v3/key-metrics-ttm/"+symbol_+"?"
+        keyMetrics = ExecuteAPI(url, date_range, True)
+        keyMetricsResp, keyMetricsRespFields = ParseDataFromAPIResponse(metricsList, keyMetrics, frequency, date_range, False, quarter, metricsUnit, symbol_)
+        keyTTMMetrics = ExecuteAPI(ttmURL, date_range, False)
+        # keyTTMMetricsResp, keyTTMMetricsRespFields = ParseDataFromAPIResponse(metricsTTM, keyTTMMetrics, frequency, date_range, True, quarter)
+        finalKeyMetricsResp = []
+        for keyMetric in keyMetricsResp:
+            try:
+                unit = metricsUnit[keyMetric['metric']]
+                keyMetric["ttm"] = getValueParsedByUnit(keyTTMMetrics[0][keyMetric['metric']+"TTM"], metricsUnit[keyMetric['metric']])
+            except Exception as e:
+                print(e)
+                keyMetric["ttm"] = getValueParsedByUnit(0, metricsUnit[keyMetric['metric']])
+            keyMetric["unit"] = metricsUnit[keyMetric['metric']]
+            # if unit is not None and unit != "":
+            #     if unitSymbolDict[unit] is not None and unitSymbolDict[unit] != "":
+            #         unitSymbol = unitSymbolDict[unit]
+            #         if unitSymbol == "ccy":
+            #             data = getCompanyProfile(symbol_)
+            #             unitSymbol = data['currency']
+            #         keyMetric['field'] = keyMetric['metric'] + " ("+unitSymbol+")"
+            finalKeyMetricsResp.append(keyMetric)
+        objectResponse = {}
+        objectResponse['keyMetricsResp'] = finalKeyMetricsResp
+        # objectResponse['keyTTMMetricsResp'] = keyTTMMetricsResp
+        objectResponse['keyMetricsRespFields'] = keyMetricsRespFields
+        objectResponse['metricsUnit'] = metricsUnit
+        # objectResponse['keyTTMMetricsRespFields'] = keyTTMMetricsRespFields
+        return_list.append(objectResponse)
+    # for field in data_.keys():
+    #     if 'id' in field:
+    #         pass
+    #     else:
+    #         # value = round(float(getattr(data_, field)), 2) if type(getattr(data_, field))==float else getattr(data_, field)
+    #         value = round(float(data_[field]), 2) if type(data_[field])==float else data_[field]
+    #         return_list.append({'field': field,'value': value})
+    return (return_list)
+
+
 def keymetrics_func(f_company, f_exchange, f_table, category, frequency, quarter, fromYear, toYear):
     # SECRETS = {}
     # try:

@@ -12,7 +12,7 @@ from shlex import quote
 from .pyfiles.datatype import datatype_fun
 from .pyfiles.financials import fin_func_latest
 from .pyfiles.market_data import market_data_func_latest
-from .pyfiles.keymetrics_group import keymetrics_func
+from .pyfiles.keymetrics_group import keymetrics_func1
 from .pyfiles.analysis_latest import quote_latest
 from .pyfiles.reported_financials import reportedfin_func_latest
 from .pyfiles.financial_notes import financial_notes_func_latest
@@ -1719,7 +1719,7 @@ class DataAnalysisKeyMetricsSerializer(serializers.Serializer):
             fromYear = data.get("fromYear")
             toYear = data.get("toYear")
             resp_data = data.get("resp_data")
-            k_table = keymetrics_func(f_company, f_exchange, f_table, category, frequency, quarter, fromYear, toYear)
+            k_table = keymetrics_func1(f_company, f_exchange, f_table, category, frequency, quarter, fromYear, toYear)
             print('>>>>>><<<<<<<<<<<<<')
             print(k_table[0]['metricsUnit'])
         except serializers.ValidationError as e :
@@ -2229,9 +2229,16 @@ class GetScreenerCompaniesByMetricFiltersSerializer(serializers.Serializer):
                 cursor = connection.cursor()
                 cursor.execute(newQuery)
                 fields = [field_md[0] for field_md in cursor.description]
-                newResult[category] = [dict(zip(fields, row)) for row in cursor.fetchall()]
-                        # print("######second quert result")
-                    
+                # newResult[category] = [dict(zip(fields, row)) for row in cursor.fetchall()]
+                second_result=[dict(zip(fields, row)) for row in cursor.fetchall()]
+                print("######second quert result",second_result)
+                print(categorized_data[category])
+                for item in categorized_data[category]:
+                    for subItem in second_result:
+                        if(item['unit']=='percent'):
+                            subItem[item['metric']]=str(round((subItem[item['metric']]*100),2))+'%' 
+                newResult[category] = second_result
+                
                     
             except Exception as inst:
                 print(inst)
@@ -2297,13 +2304,19 @@ class GetScreenerCompaniesByMetricFiltersSerializer(serializers.Serializer):
                 newQuery = newQuery.replace("avgMetricFilters", avgMetricFilters + advCondition.lstrip(","))
             else:
                 newQuery = newQuery.replace("avgMetricFilters", avgMetricFilters.rstrip(","))
-            print("######## QUERY BEING EXECUTED #######")
+            print("######## QUERY BEING EXECUTED #######",result)
             print(newQuery)
             print("######################################")
             cursor = connection.cursor()
             cursor.execute(newQuery)
             fields = [field_md[0] for field_md in cursor.description]
-            result = [dict(zip(fields, row)) for row in cursor.fetchall()]
+            secondResult = [dict(zip(fields, row)) for row in cursor.fetchall()]
+            for item in result:
+                    for subItem in secondResult:
+                        if(item['unit']=='percent'):
+                            subItem[item['metric']]=str(round((subItem[item['metric']]*100),2))+'%' 
+            result=secondResult
+            print('this is b',result)
         except Exception as inst:
             print(inst)
             raise serializers.ValidationError(

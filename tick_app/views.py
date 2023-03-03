@@ -2647,6 +2647,21 @@ class GetCompaniesCountries(APIView):
             }
         )
 
+class GetCompaniesExchanges(APIView):
+    permission_classes = (IsAuthenticated,)
+    raise_exception=True
+    def get(self, request):
+        try:
+            data = Company.objects.distinct().values("exchange")
+        except Exception as e:
+            raise(e)
+        return Response(
+            {
+                "success": True,
+                "resp_data": data
+            }
+        )
+
 class GetExchangesByCountry(APIView):
     permission_classes = (IsAuthenticated,)
     raise_exception=True
@@ -2725,24 +2740,52 @@ class GetScreenerMetricsByCategory(APIView):
             }
         )
 
+# class GetCompaniesByFilters(APIView):
+#     permission_classes = (IsAuthenticated,)
+#     raise_exception=True
+#     def post(self, request):
+#         try:
+#             country = request.data.get("country")
+#             # country = country.split(",")
+#             exchange = request.data.get("exchange")
+#             # exchange = exchange.split(",")
+#             # city = request.data.get("city")
+#             # city = city.split(",")
+#             sector = request.data.get("sector")
+#             # sector = sector.split(",")
+#             industry = request.data.get("industry")
+#             # industry = industry.split(",")
+#             data = Company.objects.filter(country__in=country, exchange__in=exchange, sector__in=sector, industry__in=industry).values()
+#         except Exception as e:
+#             raise(e)    
+#         return Response(
+#             {
+#                 "success": True,
+#                 "resp_data": data
+#             }
+#         )
+
 class GetCompaniesByFilters(APIView):
     permission_classes = (IsAuthenticated,)
     raise_exception=True
     def post(self, request):
         try:
+            filters = {}
             country = request.data.get("country")
-            # country = country.split(",")
+            if country:
+                filters['country__in'] = country
             exchange = request.data.get("exchange")
-            # exchange = exchange.split(",")
-            # city = request.data.get("city")
-            # city = city.split(",")
+            if exchange:
+                filters['exchange__in'] = exchange
             sector = request.data.get("sector")
-            # sector = sector.split(",")
+            if sector:
+                filters['sector__in'] = sector
             industry = request.data.get("industry")
-            # industry = industry.split(",")
-            data = Company.objects.filter(country__in=country, exchange__in=exchange, sector__in=sector, industry__in=industry).values()
+            if industry:
+                filters['industry__in'] = industry
+            data = Company.objects.filter(**filters).values()
         except Exception as e:
-            raise(e)
+            raise(e)    
         return Response(
             {
                 "success": True,

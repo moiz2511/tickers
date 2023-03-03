@@ -188,6 +188,8 @@ urlpatterns = [
     path("getRatiosNamesByMetric", GetRangesNamesByMetricView.as_view()),
 
     path("screener/company/countries", GetCompaniesCountries.as_view()),
+    path("screener/company/exchanges", GetCompaniesExchanges.as_view()),
+
     path("screener/countries/exchange", GetExchangesByCountry.as_view()),
     # path("screener/state", GetStateByCountryAndExchange.as_view()),
     path("screener/city", GetCityByCountryAndExchange.as_view()),
