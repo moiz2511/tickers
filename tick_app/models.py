@@ -916,6 +916,12 @@ class MetricsList(models.Model):
     label = models.CharField(max_length=64, null=True)
     unit = models.CharField(max_length=64, null=True)
     description = models.CharField(max_length=512, null=True)
+    function = models.CharField(max_length=64, null=True)
+    interpretation = models.CharField(max_length=344, null=True)
+    limitation = models.CharField(max_length=344, null=True)
+    good_range = models.CharField(max_length=344, null=True)
+    bad_range = models.CharField(max_length=344, null=True)
+
 
 class DataAcqisitionFileUpload(models.Model):
   file = models.FileField(blank=False, null=False)

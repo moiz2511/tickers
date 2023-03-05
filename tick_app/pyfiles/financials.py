@@ -222,7 +222,7 @@ def ParseDataFromAPIResponse(fields_list, data_, display, period, dateRange, qua
             try:
                 dict_['metric']=field_
                 metric_obj=AnalysisTools.objects.filter(metrics=field_)[0]
-                metrics=MetricsList.objects.filter( metric=field_).values("metric", "unit","measure","category","description")
+                metrics=MetricsList.objects.filter( metric=field_).values("metric", "unit","measure","category","description","function","interpretation","limitation","good_range","bad_range")
                 print('---------------printing metrics 226--------------')
                 print(metrics)
                 dict_['details']=metrics

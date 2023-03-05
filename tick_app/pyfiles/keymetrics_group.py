@@ -42,9 +42,9 @@ def keymetrics_func1(f_company, f_exchange, f_table, category, frequency, quarte
     # else:
     #     metrics=MetricsList.objects.filter(source="tick_app_keymetrics", category=category).values("metric", "unit")
     if f_table == "Ratios":
-        metrics=MetricsList.objects.filter(source="tick_app_ratios", category=category).values("metric", "unit","measure","category","description")
+        metrics=MetricsList.objects.filter(source="tick_app_ratios", category=category).values("metric", "unit","measure","category","description","function","interpretation","limitation","good_range","bad_range")
     else:
-        metrics=MetricsList.objects.filter(source="tick_app_keymetrics", category=category).values("metric", "unit","measure","category","description")
+        metrics=MetricsList.objects.filter(source="tick_app_keymetrics", category=category).values("metric", "unit","measure","category","description","function","interpretation","limitation","good_range","bad_range")
     metricsList = [metric['metric'] for metric in metrics]
     metricsList = [metric['metric'] for metric in metrics]
     metricsUnits = {}
@@ -53,7 +53,7 @@ def keymetrics_func1(f_company, f_exchange, f_table, category, frequency, quarte
     #     metricsUnit[metric['metric']]=metric['unit']
     
     for metric in metrics:
-        metricDetail={'unit':metric['unit'],'measure':metric['measure'],'category':metric['category'],'description':metric['description']}
+        metricDetail={'unit':metric['unit'],'measure':metric['measure'],'category':metric['category'],'description':metric['description'],'function':metric['function'],'interpretation':metric['interpretation'],'limitation':metric['limitation'],'good_range':metric['good_range'],'bad_range':metric['bad_range']}
         metricsUnits[metric['metric']]=metric['unit']
         metricsUnit[metric['metric']]=metricDetail
     print(metricsUnit)
